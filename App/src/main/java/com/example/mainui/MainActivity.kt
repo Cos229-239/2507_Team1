@@ -24,6 +24,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 
 
 import androidx.compose.ui.tooling.preview.Preview
@@ -41,17 +53,27 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MyApp(navController: NavController = rememberNavController()){
+fun MyApp(navController: NavController = rememberNavController()) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = {
-                    Box(
-                        modifier = Modifier.clickable {
-                            navController.navigate("home") {
-                                popUpTo("home") { inclusive = true }
-                            }
+                navigationIcon = {
+                    IconButton(onClick = {
+                        navController.navigate("home") {
+                            popUpTo("home") { inclusive = true }
                         }
+                    }) {
+                        Image(
+                            painter = painterResource(id = R.drawable.feelscape_logo),
+                            contentDescription = "FeelScape Logo",
+                            modifier = Modifier
+                                .size(32.dp)
+                        )
+                    }
+                },
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             buildAnnotatedString {
@@ -60,9 +82,23 @@ fun MyApp(navController: NavController = rememberNavController()){
                                 }
                                 append("Scape")
                             },
-                            fontSize = 24.sp,
+                            fontSize = 28.sp,
                             color = Color(0xFF166D70)
                         )
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        IconButton(onClick = {
+                            navController.navigate("profile")
+                        }) {
+                            Image(
+                                painter = painterResource(id = R.drawable.userprofile_icon),
+                                contentDescription = "Profile",
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .padding(start = 8.dp)
+                            )
+                        }
                     }
                 }
             )
@@ -71,7 +107,16 @@ fun MyApp(navController: NavController = rememberNavController()){
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFF46127AL))
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                Color(0xFF46127A),
+                                Color(0xFF166D70)
+                            ),
+                            start = Offset(0f, 0f),
+                            end = Offset.Infinite
+                        )
+                    )
                     .padding(padding)
             ) {
                 Text("Main Frame Content")
