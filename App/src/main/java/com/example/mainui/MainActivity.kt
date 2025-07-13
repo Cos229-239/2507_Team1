@@ -1,6 +1,7 @@
 package com.example.mainui
 
 import android.os.Bundle
+//import android.view.WindowInsets
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -27,6 +28,7 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
@@ -36,15 +38,23 @@ import androidx.compose.material3.IconButton
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.draw.shadow
 
 
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.view.WindowCompat
 import com.example.mainui.ui.theme.MainUITheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             MyApp()
         }
@@ -56,48 +66,61 @@ class MainActivity : ComponentActivity() {
 fun MyApp(navController: NavController = rememberNavController()) {
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                navigationIcon = {
-                    IconButton(onClick = {
-                        navController.navigate("home") {
-                            popUpTo("home") { inclusive = true }
-                        }
-                    }) {
-                        Image(
-                            painter = painterResource(id = R.drawable.feelscape_logo),
-                            contentDescription = "FeelScape Logo",
-                            modifier = Modifier
-                                .size(32.dp)
-                        )
-                    }
-                },
+            TopAppBar(
+                modifier = Modifier.shadow(elevation = 4.dp),
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFFF3E8FF),
+                    titleContentColor = Color(0xFF166D70)
+                ),
                 title = {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            buildAnnotatedString {
-                                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                    append("Feel")
-                                }
-                                append("Scape")
-                            },
-                            fontSize = 28.sp,
-                            color = Color(0xFF166D70)
-                        )
-
-                        Spacer(modifier = Modifier.width(16.dp))
-
-                        IconButton(onClick = {
-                            navController.navigate("profile")
-                        }) {
+                        // Logo + FeelScape text
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Image(
-                                painter = painterResource(id = R.drawable.userprofile_icon),
-                                contentDescription = "Profile",
+                                painter = painterResource(id = R.drawable.feelscape_logo),
+                                contentDescription = "FeelScape Logo",
                                 modifier = Modifier
                                     .size(40.dp)
-                                    .padding(start = 8.dp)
+                                    .padding(end = 6.dp)
                             )
+
+                            Text(
+                                buildAnnotatedString {
+                                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                        append("Feel")
+                                    }
+                                    append("Scape")
+                                },
+                                fontSize = 28.sp,
+                                color = Color(0xFF166D70)
+                            )
+                        }
+
+                        // Profile and Settings icons
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(onClick = {
+                                navController.navigate("profile")
+                            }) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.userprofile_icon),
+                                    contentDescription = "Profile",
+                                    modifier = Modifier.size(32.dp)
+                                )
+                            }
+
+                            IconButton(onClick = {
+                                navController.navigate("settings")
+                            }) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.settings_icon),
+                                    contentDescription = "Settings",
+                                    modifier = Modifier.size(32.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -108,7 +131,7 @@ fun MyApp(navController: NavController = rememberNavController()) {
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        brush = Brush.linearGradient(
+                        Brush.linearGradient(
                             colors = listOf(
                                 Color(0xFF46127A),
                                 Color(0xFF166D70)
@@ -119,7 +142,11 @@ fun MyApp(navController: NavController = rememberNavController()) {
                     )
                     .padding(padding)
             ) {
-                Text("Main Frame Content")
+                Text(
+                    text = "Main Frame Content",
+                    color = Color.White,
+                    modifier = Modifier.padding(16.dp)
+                )
             }
         }
     )
