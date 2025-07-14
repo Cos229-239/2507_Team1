@@ -44,10 +44,14 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.draw.shadow
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+
 
 
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.view.WindowCompat
+import androidx.navigation.NavHostController
 import com.example.mainui.ui.theme.MainUITheme
 
 class MainActivity : ComponentActivity() {
@@ -63,30 +67,36 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MyApp(navController: NavController = rememberNavController()) {
+fun MyApp() {
+    val navController = rememberNavController()
+
     Scaffold(
         topBar = {
             TopAppBar(
-                modifier = Modifier.shadow(elevation = 4.dp),
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFFF3E8FF),
-                    titleContentColor = Color(0xFF166D70)
+                    containerColor = Color(0xFFF3E8FF)
                 ),
+                modifier = Modifier.shadow(4.dp),
                 title = {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        // Logo + FeelScape text
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Image(
-                                painter = painterResource(id = R.drawable.feelscape_logo),
-                                contentDescription = "FeelScape Logo",
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .padding(end = 6.dp)
-                            )
+                            IconButton(onClick = {
+                                navController.navigate("home") {
+                                    popUpTo("home") { inclusive = true }
+                                }
+                            }) {
+                                Image(
+                                    painter = painterResource(R.drawable.feelscape_logo),
+                                    contentDescription = "FeelScape Logo",
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .padding(end = 6.dp)
+                                )
+                            }
 
                             Text(
                                 buildAnnotatedString {
@@ -100,23 +110,21 @@ fun MyApp(navController: NavController = rememberNavController()) {
                             )
                         }
 
-                        // Profile and Settings icons
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row {
                             IconButton(onClick = {
                                 navController.navigate("profile")
                             }) {
                                 Image(
-                                    painter = painterResource(id = R.drawable.userprofile_icon),
+                                    painter = painterResource(R.drawable.userprofile_icon),
                                     contentDescription = "Profile",
                                     modifier = Modifier.size(32.dp)
                                 )
                             }
-
                             IconButton(onClick = {
                                 navController.navigate("settings")
                             }) {
                                 Image(
-                                    painter = painterResource(id = R.drawable.settings_icon),
+                                    painter = painterResource(R.drawable.settings_icon),
                                     contentDescription = "Settings",
                                     modifier = Modifier.size(32.dp)
                                 )
@@ -135,20 +143,48 @@ fun MyApp(navController: NavController = rememberNavController()) {
                             colors = listOf(
                                 Color(0xFF46127A),
                                 Color(0xFF166D70)
-                            ),
-                            start = Offset(0f, 0f),
-                            end = Offset.Infinite
+                            )
                         )
                     )
                     .padding(padding)
             ) {
-                Text(
-                    text = "Main Frame Content",
-                    color = Color.White,
-                    modifier = Modifier.padding(16.dp)
-                )
+                AppNavigation(navController)
             }
         }
     )
+}
+
+// Navigation Graph
+@Composable
+fun AppNavigation(navController: NavHostController) {
+    NavHost(navController = navController, startDestination = "home") {
+        composable("home") { HomeScreen(navController) }
+        composable("profile") { ProfileScreen(navController) }
+        composable("settings") { SettingsScreen(navController) }
+    }
+}
+
+// Home Screen
+@Composable
+fun HomeScreen(navController: NavHostController) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("Home Screen", color = Color.White)
+    }
+}
+
+// Profile Screen
+@Composable
+fun ProfileScreen(navController: NavHostController) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("Profile Screen", color = Color.White)
+    }
+}
+
+// Settings Screen
+@Composable
+fun SettingsScreen(navController: NavHostController) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("Settings Screen", color = Color.White)
+    }
 }
 
