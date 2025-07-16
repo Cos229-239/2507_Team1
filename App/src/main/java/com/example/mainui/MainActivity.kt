@@ -29,6 +29,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
@@ -42,8 +43,11 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 
@@ -167,8 +171,21 @@ fun AppNavigation(navController: NavHostController) {
 // Home Screen
 @Composable
 fun HomeScreen(navController: NavHostController) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Home Screen", color = Color.White)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(start = 30.dp, top = 40.dp),
+        horizontalAlignment = Alignment.Start
+    ) {
+        Text(
+            text = "Your safe space for emotional wellness",
+            color = Color.White,
+            fontSize = 22.sp,
+            lineHeight = 28.sp,
+            fontFamily = FontFamily(Font(R.font.inter_regular))
+        )
+
+        DailyCheckInButton { navController.navigate("checkin") }
     }
 }
 
@@ -187,4 +204,37 @@ fun SettingsScreen(navController: NavHostController) {
         Text("Settings Screen", color = Color.White)
     }
 }
+
+@Composable
+fun DailyCheckInButton(onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .background(Color(0xFFE9F4F6), shape = RoundedCornerShape(16.dp))
+            .clickable { onClick() }
+            .shadow(2.dp, RoundedCornerShape(16.dp))
+            .padding(16.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = painterResource(R.drawable.smiley_icon),
+                contentDescription = "Smile Icon",
+                modifier = Modifier
+                    .size(32.dp)
+                    .padding(end = 12.dp)
+            )
+
+            Text(
+                text = "Daily Check-In",
+                color = Color(0xFF166D70),
+                fontSize = 18.sp,
+                fontFamily = FontFamily(Font(R.font.inter_regular))
+            )
+        }
+    }
+}
+
 
