@@ -50,6 +50,8 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Button
 
 
 
@@ -165,6 +167,7 @@ fun AppNavigation(navController: NavHostController) {
         composable("home") { HomeScreen(navController) }
         composable("profile") { ProfileScreen(navController) }
         composable("settings") { SettingsScreen(navController) }
+        composable("checkin"){ DailyCheckInScreen(navController) }
     }
 }
 
@@ -202,6 +205,39 @@ fun ProfileScreen(navController: NavHostController) {
 fun SettingsScreen(navController: NavHostController) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Text("Settings Screen", color = Color.White)
+    }
+}
+
+@Composable
+fun DailyCheckInScreen(navController: NavHostController) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.linearGradient(
+                    listOf(Color(0xFF46127A), Color(0xFF166D70))
+                )
+            )
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Daily Check-In",
+            color = Color.White,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(Modifier.height(24.dp))
+        Text(
+            text = "How are you feeling today?",
+            color = Color.White,
+            fontSize = 18.sp
+        )
+        Spacer(Modifier.height(32.dp))
+        Button(onClick = { navController.popBackStack() }) {
+            Text("Go back")
+        }
     }
 }
 
