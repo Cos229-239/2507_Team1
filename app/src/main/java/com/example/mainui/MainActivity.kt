@@ -248,21 +248,21 @@ fun HomeScreen(navController: NavHostController) {
 
         // Journal
         HomeButton(
-//            icon = R.drawable.journal_icon,
+            icon = R.drawable.journal_icon,
             label = "Journal",
             onClick = { navController.navigate("journal") }
         )
 
         // Mood History
         HomeButton(
-//            icon = R.drawable.history_icon,
+            icon = R.drawable.history_icon,
             label = "Mood History",
             onClick = { navController.navigate("history") }
         )
 
         // Advice
         HomeButton(
-//            icon = R.drawable.advice_icon,
+            icon = R.drawable.advice_icon,
             label = "Advice",
             onClick = { navController.navigate("advice") }
         )
