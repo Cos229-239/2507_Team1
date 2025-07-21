@@ -7,10 +7,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.*
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.runtime.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.material3.TopAppBar
@@ -52,13 +55,49 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
-
-
+import androidx.compose.material3.Card
+import androidx.compose.ui.draw.clip
 
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavHostController
 import com.example.mainui.ui.theme.MainUITheme
+
+// Reusable theme helpers
+private val TranquilBlue = Color(0xFF1693B2)          // link / accent
+private val TranquilSurface = Color(0xFFE7F2F4)       // card background
+private val TranquilText   = Color(0xFF022328)        // high-contrast text
+private val Inter = FontFamily(Font(R.font.inter_regular))
+private val InterBold = FontFamily(Font(R.font.inter_bold))
+
+@Composable
+private fun ScreenSurface(content: @Composable () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0xFF46127A), Color(0xFF166D70))
+                )
+            )
+            .systemBarsPadding()
+            .padding(horizontal = 24.dp, vertical = 32.dp),
+        contentAlignment = Alignment.TopCenter
+    ) { content() }
+}
+
+@Composable
+private fun DsCard(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) = Card(
+    colors = CardDefaults.cardColors(containerColor = TranquilSurface),
+    shape = RoundedCornerShape(16.dp),
+    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+    modifier = modifier.fillMaxWidth()
+) {
+    Column(Modifier.padding(24.dp)) { content() }
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -168,6 +207,12 @@ fun AppNavigation(navController: NavHostController) {
         composable("profile") { ProfileScreen(navController) }
         composable("settings") { SettingsScreen(navController) }
         composable("checkin"){ DailyCheckInScreen(navController) }
+        composable("journal")   { JournalScreen(navController) }
+        composable("history")   { MoodHistoryScreen(navController) }
+        composable("advice")    { AdviceScreen(navController) }
+
+        composable("profile")   { ProfileScreen(navController) }
+        composable("settings")  { SettingsScreen(navController) }
     }
 }
 
@@ -177,100 +222,271 @@ fun HomeScreen(navController: NavHostController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(start = 30.dp, top = 40.dp),
-        horizontalAlignment = Alignment.Start
+            .padding(top = 40.dp, start = 30.dp, end = 30.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // welcome text
         Text(
             text = "Your safe space for emotional wellness",
             color = Color.White,
             fontSize = 22.sp,
             lineHeight = 28.sp,
-            fontFamily = FontFamily(Font(R.font.inter_regular))
+            fontFamily = Inter
         )
 
-        DailyCheckInButton { navController.navigate("checkin") }
+        // Daily Check-In
+        HomeButton(
+            icon = R.drawable.smiley_icon,
+            label = "Daily Check-In",
+            onClick = { navController.navigate("checkin") }
+        )
+
+        // *****************************************************
+        // ** Justin, I need your help with adding the icons. **
+        // *****************************************************
+
+        // Journal
+        HomeButton(
+//            icon = R.drawable.journal_icon,
+            label = "Journal",
+            onClick = { navController.navigate("journal") }
+        )
+
+        // Mood History
+        HomeButton(
+//            icon = R.drawable.history_icon,
+            label = "Mood History",
+            onClick = { navController.navigate("history") }
+        )
+
+        // Advice
+        HomeButton(
+//            icon = R.drawable.advice_icon,
+            label = "Advice",
+            onClick = { navController.navigate("advice") }
+        )
+    }
+}
+
+// Re-usable Home button
+@Composable
+private fun HomeButton(
+    icon: Int? = null,
+    label: String,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        colors = CardDefaults.cardColors(containerColor = TranquilSurface),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // icon only if the drawable exists
+            icon?.let {
+                Image(
+                    painter = painterResource(it),
+                    contentDescription = label,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .padding(end = 12.dp)
+                )
+            }
+            Text(
+                text = label,
+                fontSize = 18.sp,
+                fontFamily = Inter,
+                color = TranquilText
+            )
+        }
+    }
+}
+// ------------------------
+// Home Screen Buttons
+// ------------------------
+
+// Daily Check-In button
+@Composable
+fun DailyCheckInScreen(navController: NavHostController) =
+    ScreenSurface {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                "Daily Check-In",
+                fontFamily = InterBold,
+                fontSize = 30.sp,
+                color = Color.White
+            )
+            Spacer(Modifier.height(24.dp))
+            Text(
+                "How are you feeling today?",
+                fontFamily = Inter,
+                fontSize = 18.sp,
+                color = Color.White
+            )
+            Spacer(Modifier.height(32.dp))
+            Button(
+                onClick = { navController.popBackStack() },
+                colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue)
+            ) {
+                Text("Go back", fontFamily = Inter, color = Color.White)
+            }
+        }
+    }
+
+// Journal
+@Composable
+fun JournalScreen(navController: NavHostController) = ScreenSurface {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("Journal Screen", fontFamily = InterBold, fontSize = 28.sp, color = Color.White)
+        Spacer(Modifier.height(24.dp))
+        Button(
+            onClick = { navController.popBackStack() },
+            colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue),
+            modifier = Modifier.padding(top = 24.dp)
+        ) {
+            Text("Go back", fontFamily = Inter, color = Color.White)
+        }
+    }
+}
+
+// Mood History
+@Composable
+fun MoodHistoryScreen(navController: NavHostController) = ScreenSurface {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("Mood History Screen", fontFamily = InterBold, fontSize = 28.sp, color = Color.White)
+        Spacer(Modifier.height(24.dp))
+        Button(
+            onClick = { navController.popBackStack() },
+            colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue),
+            modifier = Modifier.padding(top = 24.dp)
+        ) {
+            Text("Go back", fontFamily = Inter, color = Color.White)
+        }
+    }
+}
+
+// Advice
+@Composable
+fun AdviceScreen(navController: NavHostController) = ScreenSurface {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("Advice Screen", fontFamily = InterBold, fontSize = 28.sp, color = Color.White)
+        Spacer(Modifier.height(24.dp))
+        Button(
+            onClick = { navController.popBackStack() },
+            colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue),
+            modifier = Modifier.padding(top = 24.dp)
+        ) {
+            Text("Go back", fontFamily = Inter, color = Color.White)
+        }
     }
 }
 
 // Profile Screen
 @Composable
-fun ProfileScreen(navController: NavHostController) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Profile Screen", color = Color.White)
+fun ProfileScreen(navController: NavHostController) = ScreenSurface {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            "My Profile",
+            fontFamily = InterBold,
+            fontSize = 30.sp,
+            color = Color.White
+        )
+
+        DsCard {
+            ProfileRow("Display Name", "Alex Doe")
+            ProfileRow("Email", "alex@feelscape.app")
+            ProfileRow("Member Since", "July 2025")
+            Spacer(Modifier.height(16.dp))
+            Button(
+                onClick = { /* TODO edit screen */ },
+                colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue)
+            ) {
+                Text("Edit Profile", fontFamily = Inter, color = Color.White)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProfileRow(label: String, value: String) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, fontFamily = Inter, color = TranquilText)
+        Text(value, fontFamily = InterBold, color = TranquilText)
     }
 }
 
 // Settings Screen
 @Composable
-fun SettingsScreen(navController: NavHostController) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Settings Screen", color = Color.White)
-    }
-}
-
-@Composable
-fun DailyCheckInScreen(navController: NavHostController) {
+fun SettingsScreen(navController: NavHostController) = ScreenSurface {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.linearGradient(
-                    listOf(Color(0xFF46127A), Color(0xFF166D70))
-                )
-            )
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Daily Check-In",
-            color = Color.White,
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold
+            "Settings",
+            fontFamily = InterBold,
+            fontSize = 30.sp,
+            color = Color.White
         )
-        Spacer(Modifier.height(24.dp))
-        Text(
-            text = "How are you feeling today?",
-            color = Color.White,
-            fontSize = 18.sp
-        )
-        Spacer(Modifier.height(32.dp))
-        Button(onClick = { navController.popBackStack() }) {
-            Text("Go back")
+
+        DsCard {
+            SettingsSwitch("Dark Mode", false)
+            SettingsSwitch("Push Notifications", true)
+            SettingsSwitch("Weekly Reports", true)
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 12.dp),
+                thickness = 1.dp,
+                color = TranquilBlue
+            )
+            Text(
+                "About FeelScape v1.0",
+                fontFamily = Inter,
+                fontSize = 14.sp,
+                color = TranquilText
+            )
         }
     }
 }
 
 @Composable
-fun DailyCheckInButton(onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .background(Color(0xFFE9F4F6), shape = RoundedCornerShape(16.dp))
-            .clickable { onClick() }
-            .shadow(2.dp, RoundedCornerShape(16.dp))
-            .padding(16.dp)
+private fun SettingsSwitch(label: String, enabled: Boolean) {
+    var checked by remember { mutableStateOf(enabled) }
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Image(
-                painter = painterResource(R.drawable.smiley_icon),
-                contentDescription = "Smile Icon",
-                modifier = Modifier
-                    .size(32.dp)
-                    .padding(end = 12.dp)
+        Text(label, fontFamily = Inter, color = TranquilText)
+        Switch(
+            checked = checked,
+            onCheckedChange = { checked = it },
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = TranquilBlue,
+                checkedTrackColor = TranquilBlue.copy(alpha = .5f)
             )
-
-            Text(
-                text = "Daily Check-In",
-                color = Color(0xFF166D70),
-                fontSize = 18.sp,
-                fontFamily = FontFamily(Font(R.font.inter_regular))
-            )
-        }
+        )
     }
 }
-
-
