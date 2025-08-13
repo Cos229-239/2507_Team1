@@ -15,6 +15,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.material3.TopAppBar
 import androidx.compose.foundation.layout.Box
@@ -27,7 +28,6 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.sp
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Image
@@ -63,12 +63,25 @@ import androidx.core.view.WindowCompat
 import androidx.navigation.NavHostController
 import com.example.mainui.ui.theme.MainUITheme
 
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.systemBarsPadding
+
 // Reusable theme helpers
 private val TranquilBlue = Color(0xFF1693B2)          // link / accent
 private val TranquilSurface = Color(0xFFE7F2F4)       // card background
 private val TranquilText   = Color(0xFF022328)        // high-contrast text
 private val Inter = FontFamily(Font(R.font.inter_regular))
 private val InterBold = FontFamily(Font(R.font.inter_bold))
+
+data class Emotion(val iconResId: Int, val name: String)
+
+val emotions = listOf(
+    Emotion(R.drawable.happy_icon, "Happy"),
+    Emotion(R.drawable.content_icon, "Content"),
+    Emotion(R.drawable.neutral_icon, "Neutral"),
+    Emotion(R.drawable.sad_icon, "Sad"),
+    Emotion(R.drawable.angry_icon, "Angry")
+)
 
 @Composable
 private fun ScreenSurface(content: @Composable () -> Unit) {
@@ -242,27 +255,23 @@ fun HomeScreen(navController: NavHostController) {
             onClick = { navController.navigate("checkin") }
         )
 
-        // *****************************************************
-        // ** Justin, I need your help with adding the icons. **
-        // *****************************************************
-
         // Journal
         HomeButton(
-//            icon = R.drawable.journal_icon,
+            icon = R.drawable.journal_icon,
             label = "Journal",
             onClick = { navController.navigate("journal") }
         )
 
         // Mood History
         HomeButton(
-//            icon = R.drawable.history_icon,
+            icon = R.drawable.history_icon,
             label = "Mood History",
             onClick = { navController.navigate("history") }
         )
 
         // Advice
         HomeButton(
-//            icon = R.drawable.advice_icon,
+            icon = R.drawable.advice_icon,
             label = "Advice",
             onClick = { navController.navigate("advice") }
         )
@@ -311,35 +320,100 @@ private fun HomeButton(
 // ------------------------
 
 // Daily Check-In button
+
 @Composable
-fun DailyCheckInScreen(navController: NavHostController) =
-    ScreenSurface {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+fun EmotionBox(
+    emotion: Emotion,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) MaterialTheme.colorScheme.surfaceVariant else TranquilSurface
+        ),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        modifier = Modifier
+            .sizeIn(minWidth = 80.dp, minHeight = 80.dp)
+            .padding(16.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable(onClick = onClick)
+                .padding(12.dp)
         ) {
-            Text(
-                "Daily Check-In",
-                fontFamily = InterBold,
-                fontSize = 30.sp,
-                color = Color.White
+            Image(
+                painter = painterResource(emotion.iconResId),
+                contentDescription = emotion.name,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(40.dp)
             )
-            Spacer(Modifier.height(24.dp))
-            Text(
-                "How are you feeling today?",
-                fontFamily = Inter,
-                fontSize = 18.sp,
-                color = Color.White
-            )
-            Spacer(Modifier.height(32.dp))
-            Button(
-                onClick = { navController.popBackStack() },
-                colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue)
-            ) {
-                Text("Go back", fontFamily = Inter, color = Color.White)
+            if (isSelected) {
+                Text(
+                    text = "●",
+                    fontSize = 18.sp,
+                    fontFamily = Inter,
+                    color = Color.Black,
+                    modifier = Modifier.align(Alignment.TopEnd)
+                )
             }
         }
     }
+}
+
+@Composable
+fun DailyCheckInScreen(navController: NavController) {
+    var selectedEmotion by remember { mutableStateOf(emotions[0]) }
+    var notes by rememberSaveable { mutableStateOf("") }
+
+    ScreenSurface {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("Daily Check-In", fontFamily = InterBold, fontSize = 30.sp, color = Color.White)
+            Spacer(Modifier.height(24.dp))
+
+            Text("How are you feeling today?", fontFamily = Inter, fontSize = 18.sp, color = Color.White)
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                emotions.forEach { emotion ->
+                    EmotionBox(
+                        emotion = emotion,
+                        isSelected = selectedEmotion == emotion,
+                        onClick = { selectedEmotion = emotion }
+                    )
+                }
+            }
+
+            OutlinedTextField(
+                value = notes,
+                onValueChange = { notes = it },
+                label = { Text("Elaborate on how you are feeling...") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp)
+            )
+
+            Button(
+                onClick = { navController.popBackStack() },
+                colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue),
+                modifier = Modifier.padding(top = 24.dp)
+            ) {
+                Text("Submit", fontFamily = Inter, color = Color.White)
+            }
+        }
+    }
+}
 
 // Journal
 @Composable
