@@ -77,16 +77,22 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
-
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.border
-
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.unit.Dp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.foundation.layout.*
+
 
 // Reusable theme helpers
 private val TranquilBlue = Color(0xFF1693B2)          // link / accent
@@ -120,6 +126,8 @@ private val quotes = listOf(
     "Tough times never last, but tough people do! - Robert Schuller",
     "Not until we are lost do we begin to understand ourselves - Henry David"
 )
+
+
 
 private fun randomQuote(): String = quotes.random()
 
@@ -162,194 +170,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun MyApp() {
-    val appContext = LocalContext.current.applicationContext
-    val navController = rememberNavController()
-
-val darkModeFlow = remember(appContext) {
-    ThemeSettings.darkModeFlow(appContext).distinctUntilChanged()
-}
-val darkMode by darkModeFlow.collectAsStateWithLifecycle(initialValue = false)
-
-val scope = rememberCoroutineScope()
-val setDarkMode: (Boolean) -> Unit = { enabled ->
-    scope.launch { ThemeSettings.setDarkMode(appContext, enabled) }
-}
-
-MainUITheme(darkTheme = darkMode) {
-    Scaffold(
-        contentWindowInsets = WindowInsets.systemBars,
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF3E8FF)),
-                modifier = Modifier.shadow(4.dp),
-                title = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(onClick = {
-                                navController.navigate("home") {
-                                    popUpTo("home") { inclusive = true }
-                                }
-                            }) {
-                                Image(
-                                    painter = painterResource(R.drawable.feelscape_logo),
-                                    contentDescription = "FeelScape Logo",
-                                    modifier = Modifier.size(40.dp).padding(end = 6.dp)
-                                )
-                            }
-                            Text(
-                                buildAnnotatedString {
-                                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) { append("Feel") }
-                                    append("Scape")
-                                },
-                                fontSize = 28.sp,
-                                color = Color(0xFF166D70)
-                            )
-                        }
-                        Row {
-                            IconButton(onClick = { navController.navigate("profile") }) {
-                                Image(
-                                    painter = painterResource(R.drawable.userprofile_icon),
-                                    contentDescription = "Profile",
-                                    modifier = Modifier.size(32.dp)
-                                )
-                            }
-                            IconButton(onClick = { navController.navigate("settings") }) {
-                                Image(
-                                    painter = painterResource(R.drawable.settings_icon),
-                                    contentDescription = "Settings",
-                                    modifier = Modifier.size(32.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(Color(0xFF46127A), Color(0xFF166D70))
-                    )
-                )
-                .padding(padding)
-        ) {
-            AppNavigation(
-                navController = navController,
-                darkMode = darkMode,
-                onDarkModeChange = setDarkMode
-            )
-        }
-    }
-}
-
-
-// Navigation Graph
-@Composable
-fun AppNavigation(
-    navController: NavHostController,
-    darkMode: Boolean,
-    onDarkModeChange: (Boolean) -> Unit
-) {
-    NavHost(navController = navController, startDestination = "home") {
-        composable("home") { HomeScreen(navController) }
-        composable("profile") { ProfileScreen(navController) }
-        composable("settings") { SettingsScreen(navController, darkMode, onDarkModeChange) }
-        composable("checkin"){ DailyCheckInScreen(navController) }
-        composable("journal")   { JournalScreen(navController) }
-        composable("history")   { MoodHistoryScreen(navController) }
-        composable("advice")    { AdviceScreen(navController) }
-}
-
-// Home Screen
-@Composable
-fun HomeScreen(navController: NavHostController) {
-    var quote by rememberSaveable { mutableStateOf(randomQuote()) }
-    var firstResumeHandled by remember { mutableStateOf(false) }
-
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                if (firstResumeHandled) {
-                    quote = randomQuote()
-                } else {
-                    firstResumeHandled = true
-                }
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
-
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 24.dp, vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        item {
-            Text(
-                text = "Your safe space for emotional wellness",
-                color = Color.White,
-                fontSize = 22.sp,
-                lineHeight = 28.sp,
-                fontFamily = Inter
-            )
-        }
-
-        item {
-            HomeButton(
-                icon = R.drawable.smiley_icon,
-                label = "Daily Check-In",
-                onClick = { navController.navigate("checkin") }
-            )
-        }
-
-        item {
-            HomeButton(
-                icon = R.drawable.journal_icon,
-                label = "Journal",
-                onClick = { navController.navigate("journal") }
-            )
-        }
-
-        item {
-            HomeButton(
-                icon = R.drawable.history_icon,
-                label = "Mood History",
-                onClick = { navController.navigate("history") }
-            )
-        }
-
-        item {
-            HomeButton(
-                icon = R.drawable.advice_icon,
-                label = "Advice",
-                onClick = { navController.navigate("advice") }
-            )
-        }
-
-        item {
-            QuoteCard(
-                quote = quote,
-                onRefresh = { quote = randomQuote() }
-            )
-        }
-    }
-}    
-
 
 @Composable
 private fun HomeButton(
@@ -445,7 +265,7 @@ private fun QuoteCard(
 }
 
 @Composable
-private fun QuoteBlock(modifier: Modifier = Modifier) {
+fun HomeScreen(navController: NavHostController) {
     var quote by rememberSaveable { mutableStateOf(randomQuote()) }
     var firstResumeHandled by remember { mutableStateOf(false) }
 
@@ -453,24 +273,171 @@ private fun QuoteBlock(modifier: Modifier = Modifier) {
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                if (firstResumeHandled) quote = randomQuote() else firstResumeHandled = true
+                if (firstResumeHandled) {
+                    quote = randomQuote()
+                } else {
+                    firstResumeHandled = true
+                }
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    QuoteCard(
-        quote = quote,
-        onRefresh = { quote = randomQuote() }
-    )
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp, vertical = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        item {
+            Text(
+                text = "Your safe space for emotional wellness",
+                color = Color.White,
+                fontSize = 22.sp,
+                lineHeight = 28.sp,
+                fontFamily = Inter
+            )
+        }
+
+        item {
+            HomeButton(
+                icon = R.drawable.smiley_icon,
+                label = "Daily Check-In",
+                onClick = { navController.navigate("checkin") }
+            )
+        }
+
+        item {
+            HomeButton(
+                icon = R.drawable.journal_icon,
+                label = "Journal",
+                onClick = { navController.navigate("journal") }
+            )
+        }
+
+        item {
+            HomeButton(
+                icon = R.drawable.history_icon,
+                label = "Mood History",
+                onClick = { navController.navigate("history") }
+            )
+        }
+
+        item {
+            HomeButton(
+                icon = R.drawable.advice_icon,
+                label = "Advice",
+                onClick = { navController.navigate("advice") }
+            )
+        }
+
+        item {
+            QuoteCard(
+                quote = quote,
+                onRefresh = { quote = randomQuote() }
+            )
+        }
+    }
 }
 
-// ------------------------
-// Home Screen Buttons
-// ------------------------
+@Composable
+private fun ProfileRow(label: String, value: String) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, fontFamily = Inter, color = TranquilText)
+        Text(value, fontFamily = InterBold, color = TranquilText)
+    }
+}
 
-// Daily Check-In button
+// Profile Screen
+@Composable
+fun ProfileScreen(navController: NavHostController) = ScreenSurface {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            "My Profile",
+            fontFamily = InterBold,
+            fontSize = 30.sp,
+            color = Color.White
+        )
+
+        DsCard {
+            ProfileRow("Display Name", "Alex Doe")
+            ProfileRow("Email", "alex@feelscape.app")
+            ProfileRow("Member Since", "July 2025")
+            Spacer(Modifier.height(16.dp))
+            Button(
+                onClick = { /* TODO edit screen */ },
+                colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue)
+            ) {
+                Text("Edit Profile", fontFamily = Inter, color = Color.White)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsSwitch(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    //var checked by remember { mutableStateOf(enabled) }
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, fontFamily = Inter, color = TranquilText)
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = TranquilBlue,
+                checkedTrackColor = TranquilBlue.copy(alpha = .5f)
+            )
+        )
+    }
+}
+
+// Settings Screen
+@Composable
+fun SettingsScreen(navController: NavHostController, darkMode: Boolean, onDarkModeChange: (Boolean) -> Unit) = ScreenSurface {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            "Settings",
+            fontFamily = InterBold,
+            fontSize = 30.sp,
+            color = Color.White
+        )
+
+        DsCard {
+            SettingsSwitch(
+                label = "Dark Mode",
+                checked = darkMode,
+                onCheckedChange = onDarkModeChange
+            )
+            SettingsSwitch("Push Notifications", true, onCheckedChange = {}) // Needs to be finished!
+            SettingsSwitch("Weekly Reports", true, onCheckedChange = {}) // Needs to be finished!
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 12.dp),
+                thickness = 1.dp,
+                color = TranquilBlue
+            )
+            Text(
+                "About FeelScape v1.0",
+                fontFamily = Inter,
+                fontSize = 14.sp,
+                color = TranquilText
+            )
+        }
+    }
+}
 
 @Composable
 fun EmotionBox(
@@ -584,6 +551,28 @@ fun DailyCheckInScreen(navController: NavController) {
     }
 }
 
+@Composable
+private fun QuoteBlock(modifier: Modifier = Modifier) {
+    var quote by rememberSaveable { mutableStateOf(randomQuote()) }
+    var firstResumeHandled by remember { mutableStateOf(false) }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                if (firstResumeHandled) quote = randomQuote() else firstResumeHandled = true
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    QuoteCard(
+        quote = quote,
+        onRefresh = { quote = randomQuote() }
+    )
+}
+
 // Journal
 @Composable
 fun JournalScreen(navController: NavHostController) = ScreenSurface {
@@ -653,99 +642,139 @@ fun AdviceScreen(navController: NavHostController) = ScreenSurface {
     }
 }
 
-// Profile Screen
 @Composable
-fun ProfileScreen(navController: NavHostController) = ScreenSurface {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            "My Profile",
-            fontFamily = InterBold,
-            fontSize = 30.sp,
-            color = Color.White
-        )
+fun AppNavigation(
+    navController: NavHostController,
+    darkMode: Boolean,
+    onDarkModeChange: (Boolean) -> Unit
+) {
+    NavHost(navController = navController, startDestination = "home") {
+        composable("home")     { HomeScreen(navController) }
+        composable("profile")  { ProfileScreen(navController) }
+        composable("settings") { SettingsScreen(navController, darkMode, onDarkModeChange) }
+        composable("checkin")  { DailyCheckInScreen(navController) }
+        composable("journal")  { JournalScreen(navController) }
+        composable("history")  { MoodHistoryScreen(navController) }
+        composable("advice")   { AdviceScreen(navController) }
+    }
+}
 
-        DsCard {
-            ProfileRow("Display Name", "Alex Doe")
-            ProfileRow("Email", "alex@feelscape.app")
-            ProfileRow("Member Since", "July 2025")
-            Spacer(Modifier.height(16.dp))
-            Button(
-                onClick = { /* TODO edit screen */ },
-                colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MyApp() {
+    val appContext = LocalContext.current.applicationContext
+    val navController = rememberNavController()
+
+    val darkModeFlow = remember(appContext) {
+        ThemeSettings.darkModeFlow(appContext).distinctUntilChanged()
+    }
+    val darkMode by darkModeFlow.collectAsStateWithLifecycle(initialValue = false)
+
+    val scope = rememberCoroutineScope()
+    val setDarkMode: (Boolean) -> Unit = { enabled ->
+        scope.launch { ThemeSettings.setDarkMode(appContext, enabled) }
+    }
+
+    MainUITheme(darkTheme = darkMode) {
+        Scaffold(
+            contentWindowInsets = WindowInsets.systemBars,
+            topBar = {
+                TopAppBar(
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF3E8FF)),
+                    modifier = Modifier.shadow(4.dp),
+                    title = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                IconButton(onClick = {
+                                    navController.navigate("home") {
+                                        popUpTo("home") { inclusive = true }
+                                    }
+                                }) {
+                                    Image(
+                                        painter = painterResource(R.drawable.feelscape_logo),
+                                        contentDescription = "FeelScape Logo",
+                                        modifier = Modifier.size(40.dp).padding(end = 6.dp)
+                                    )
+                                }
+                                Text(
+                                    buildAnnotatedString {
+                                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                            append(
+                                                "Feel"
+                                            )
+                                        }
+                                        append("Scape")
+                                    },
+                                    fontSize = 28.sp,
+                                    color = Color(0xFF166D70)
+                                )
+                            }
+                            Row {
+                                IconButton(onClick = { navController.navigate("profile") }) {
+                                    Image(
+                                        painter = painterResource(R.drawable.userprofile_icon),
+                                        contentDescription = "Profile",
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                }
+                                IconButton(onClick = { navController.navigate("settings") }) {
+                                    Image(
+                                        painter = painterResource(R.drawable.settings_icon),
+                                        contentDescription = "Settings",
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                )
+            }
+        ) { padding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color(0xFF46127A), Color(0xFF166D70))
+                        )
+                    )
+                    .padding(padding)
             ) {
-                Text("Edit Profile", fontFamily = Inter, color = Color.White)
+                AppNavigation(
+                    navController = navController,
+                    darkMode = darkMode,
+                    onDarkModeChange = setDarkMode
+                )
             }
         }
     }
-}
 
-@Composable
-private fun ProfileRow(label: String, value: String) {
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(label, fontFamily = Inter, color = TranquilText)
-        Text(value, fontFamily = InterBold, color = TranquilText)
-    }
-}
 
-// Settings Screen
-@Composable
-fun SettingsScreen(navController: NavHostController, darkMode: Boolean, onDarkModeChange: (Boolean) -> Unit) = ScreenSurface {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            "Settings",
-            fontFamily = InterBold,
-            fontSize = 30.sp,
-            color = Color.White
-        )
-
-        DsCard {
-            SettingsSwitch(
-                label = "Dark Mode",
-                checked = darkMode,
-                onCheckedChange = onDarkModeChange
-            )
-            SettingsSwitch("Push Notifications", true, onCheckedChange = {}) // Needs to be finished!
-            SettingsSwitch("Weekly Reports", true, onCheckedChange = {}) // Needs to be finished!
-            HorizontalDivider(
-                modifier = Modifier.padding(vertical = 12.dp),
-                thickness = 1.dp,
-                color = TranquilBlue
-            )
-            Text(
-                "About FeelScape v1.0",
-                fontFamily = Inter,
-                fontSize = 14.sp,
-                color = TranquilText
-            )
+    @Composable
+    fun ProfileRow(label: String, value: String) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(label, fontFamily = Inter, color = TranquilText)
+            Text(value, fontFamily = InterBold, color = TranquilText)
         }
     }
 }
 
-@Composable
-private fun SettingsSwitch(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    //var checked by remember { mutableStateOf(enabled) }
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(label, fontFamily = Inter, color = TranquilText)
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = TranquilBlue,
-                checkedTrackColor = TranquilBlue.copy(alpha = .5f)
-            )
-        )
-    }
-}
+
+
+
+
+
+
+
+
+
+
+
