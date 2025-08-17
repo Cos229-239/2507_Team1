@@ -5,6 +5,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -31,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -65,6 +68,15 @@ import com.example.mainui.ui.theme.MainUITheme
 
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 
 // Reusable theme helpers
 private val TranquilBlue = Color(0xFF1693B2)          // link / accent
@@ -82,6 +94,24 @@ val emotions = listOf(
     Emotion(R.drawable.sad_icon, "Sad"),
     Emotion(R.drawable.angry_icon, "Angry")
 )
+
+data class Quote(val text: String)
+
+private val quotes = listOf(
+    "Your mental health is just as important as your physical health.",
+    "It's okay not to be okay",
+    "You are worthy of happiness and peace of mind",
+    "You are not alone in your struggles",
+    "You are stronger than you realize",
+    "Small steps can lead to big progress in mental health",
+    "You are not a burden for seeking help for your mental health",
+    "The experience I have had is that once you start talking about [experiencing a mental health struggle], you realize that actually you’re part of quite a big club - Prince Harry",
+    "There is hope, even when your brain tells you there isn’t - John Green",
+    "Tough times never last, but tough people do! - Robert Schuller",
+    "Not until we are lost do we begin to understand ourselves - Henry David"
+)
+
+private fun randomQuote(): String = quotes.random()
 
 @Composable
 private fun ScreenSurface(content: @Composable () -> Unit) {
@@ -126,112 +156,158 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyApp() {
+    val appContext = LocalContext.current.applicationContext
     val navController = rememberNavController()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFFF3E8FF)
-                ),
-                modifier = Modifier.shadow(4.dp),
-                title = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(onClick = {
-                                navController.navigate("home") {
-                                    popUpTo("home") { inclusive = true }
-                                }
-                            }) {
-                                Image(
-                                    painter = painterResource(R.drawable.feelscape_logo),
-                                    contentDescription = "FeelScape Logo",
-                                    modifier = Modifier
-                                        .size(40.dp)
-                                        .padding(end = 6.dp)
-                                )
-                            }
+    val darkModeFlow = remember(appContext) {
+        ThemeSettings.darkModeFlow(appContext).distinctUntilChanged()
+    }
 
-                            Text(
-                                buildAnnotatedString {
-                                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                        append("Feel")
+    val darkMode by darkModeFlow.collectAsStateWithLifecycle(initialValue = false)
+
+    val scope = rememberCoroutineScope()
+    val setDarkMode: (Boolean) -> Unit = { enabled ->
+        scope.launch { ThemeSettings.setDarkMode(appContext, enabled) }
+    }
+
+    MainUITheme(darkTheme = darkMode){
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color(0xFFF3E8FF)
+                    ),
+                    modifier = Modifier.shadow(4.dp),
+                    title = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                IconButton(onClick = {
+                                    navController.navigate("home") {
+                                        popUpTo("home") { inclusive = true }
                                     }
-                                    append("Scape")
-                                },
-                                fontSize = 28.sp,
-                                color = Color(0xFF166D70)
-                            )
-                        }
+                                }) {
+                                    Image(
+                                        painter = painterResource(R.drawable.feelscape_logo),
+                                        contentDescription = "FeelScape Logo",
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .padding(end = 6.dp)
+                                    )
+                                }
 
-                        Row {
-                            IconButton(onClick = {
-                                navController.navigate("profile")
-                            }) {
-                                Image(
-                                    painter = painterResource(R.drawable.userprofile_icon),
-                                    contentDescription = "Profile",
-                                    modifier = Modifier.size(32.dp)
+                                Text(
+                                    buildAnnotatedString {
+                                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                            append("Feel")
+                                        }
+                                        append("Scape")
+                                    },
+                                    fontSize = 28.sp,
+                                    color = Color(0xFF166D70)
                                 )
                             }
-                            IconButton(onClick = {
-                                navController.navigate("settings")
-                            }) {
-                                Image(
-                                    painter = painterResource(R.drawable.settings_icon),
-                                    contentDescription = "Settings",
-                                    modifier = Modifier.size(32.dp)
-                                )
+
+                            Row {
+                                IconButton(onClick = {
+                                    navController.navigate("profile")
+                                }) {
+                                    Image(
+                                        painter = painterResource(R.drawable.userprofile_icon),
+                                        contentDescription = "Profile",
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                }
+                                IconButton(onClick = {
+                                    navController.navigate("settings")
+                                }) {
+                                    Image(
+                                        painter = painterResource(R.drawable.settings_icon),
+                                        contentDescription = "Settings",
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                }
                             }
                         }
                     }
-                }
-            )
-        },
-        content = { padding ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(
-                                Color(0xFF46127A),
-                                Color(0xFF166D70)
+                )
+            },
+            content = { padding ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.linearGradient(
+                                colors = listOf(
+                                    Color(0xFF46127A),
+                                    Color(0xFF166D70)
+                                )
                             )
                         )
+                        .padding(padding)
+                ) {
+                    AppNavigation(
+                        navController = navController,
+                        darkMode = darkMode,
+                        onDarkModeChange = setDarkMode
                     )
-                    .padding(padding)
-            ) {
-                AppNavigation(navController)
+                }
             }
-        }
-    )
+        )
+    }
+
 }
 
 // Navigation Graph
 @Composable
-fun AppNavigation(navController: NavHostController) {
+fun AppNavigation(
+    navController: NavHostController,
+    darkMode: Boolean,
+    onDarkModeChange: (Boolean) -> Unit
+) {
     NavHost(navController = navController, startDestination = "home") {
         composable("home") { HomeScreen(navController) }
         composable("profile") { ProfileScreen(navController) }
-        composable("settings") { SettingsScreen(navController) }
+        composable("settings") { SettingsScreen(navController, darkMode, onDarkModeChange) }
         composable("checkin"){ DailyCheckInScreen(navController) }
         composable("journal")   { JournalScreen(navController) }
         composable("history")   { MoodHistoryScreen(navController) }
         composable("advice")    { AdviceScreen(navController) }
 
         composable("profile")   { ProfileScreen(navController) }
-        composable("settings")  { SettingsScreen(navController) }
+        //composable("settings")  { SettingsScreen(navController) }
     }
 }
 
 // Home Screen
 @Composable
 fun HomeScreen(navController: NavHostController) {
+    var quote by rememberSaveable { mutableStateOf(randomQuote()) }
+    var firstResumeHandled by remember { mutableStateOf(false)}
+
+    // Generate a new quote when the screen first loads
+    //LaunchedEffect(Unit) { quote = randomQuote() }
+
+    // Refresh quote whenever we come back to the Home screen
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                if (firstResumeHandled){
+                    quote = randomQuote()
+                } else{
+                    firstResumeHandled = true
+                }
+
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -239,7 +315,7 @@ fun HomeScreen(navController: NavHostController) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // welcome text
+
         Text(
             text = "Your safe space for emotional wellness",
             color = Color.White,
@@ -248,32 +324,35 @@ fun HomeScreen(navController: NavHostController) {
             fontFamily = Inter
         )
 
-        // Daily Check-In
+        // buttons
         HomeButton(
             icon = R.drawable.smiley_icon,
             label = "Daily Check-In",
             onClick = { navController.navigate("checkin") }
         )
-
-        // Journal
         HomeButton(
             icon = R.drawable.journal_icon,
             label = "Journal",
             onClick = { navController.navigate("journal") }
         )
-
-        // Mood History
         HomeButton(
             icon = R.drawable.history_icon,
             label = "Mood History",
             onClick = { navController.navigate("history") }
         )
-
-        // Advice
         HomeButton(
             icon = R.drawable.advice_icon,
             label = "Advice",
             onClick = { navController.navigate("advice") }
+        )
+
+        // push quote card to the bottom
+        Spacer(modifier = Modifier.weight(1f))
+
+        // quote card
+        QuoteCard(
+            quote = quote,
+            onRefresh = { quote = randomQuote() }
         )
     }
 }
@@ -315,6 +394,88 @@ private fun HomeButton(
         }
     }
 }
+
+@Composable
+private fun QuoteCard(
+    quote: String,
+    onRefresh: () -> Unit
+) {
+    val shape = RoundedCornerShape(16.dp)
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = TranquilSurface),
+        shape = shape,
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(
+                BorderStroke(1.dp, SolidColor(TranquilBlue.copy(alpha = 0.25f))),
+                shape
+            )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Animation between-quotes
+            Crossfade(targetState = quote, label = "quoteCrossfade") { q ->
+                Text(
+                    text = "“$q”",
+                    color = TranquilText,
+                    fontFamily = Inter,
+                    fontSize = 16.sp,
+                    lineHeight = 22.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            // Thin accent divider
+            Divider(
+                modifier = Modifier
+                    .width(48.dp)
+                    .height(2.dp),
+                color = TranquilBlue.copy(alpha = 0.45f)
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+
+            TextButton(onClick = onRefresh) {
+                Text(
+                    "New quote",
+                    fontFamily = InterBold,
+                    color = TranquilBlue
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuoteBlock(modifier: Modifier = Modifier) {
+    var quote by rememberSaveable { mutableStateOf(randomQuote()) }
+    var firstResumeHandled by remember { mutableStateOf(false) }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                if (firstResumeHandled) quote = randomQuote() else firstResumeHandled = true
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    QuoteCard(
+        quote = quote,
+        onRefresh = { quote = randomQuote() }
+    )
+}
+
 // ------------------------
 // Home Screen Buttons
 // ------------------------
@@ -431,6 +592,10 @@ fun JournalScreen(navController: NavHostController) = ScreenSurface {
         ) {
             Text("Go back", fontFamily = Inter, color = Color.White)
         }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        QuoteBlock()
     }
 }
 
@@ -450,6 +615,10 @@ fun MoodHistoryScreen(navController: NavHostController) = ScreenSurface {
         ) {
             Text("Go back", fontFamily = Inter, color = Color.White)
         }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        QuoteBlock()
     }
 }
 
@@ -469,6 +638,10 @@ fun AdviceScreen(navController: NavHostController) = ScreenSurface {
         ) {
             Text("Go back", fontFamily = Inter, color = Color.White)
         }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        QuoteBlock()
     }
 }
 
@@ -514,7 +687,7 @@ private fun ProfileRow(label: String, value: String) {
 
 // Settings Screen
 @Composable
-fun SettingsScreen(navController: NavHostController) = ScreenSurface {
+fun SettingsScreen(navController: NavHostController, darkMode: Boolean, onDarkModeChange: (Boolean) -> Unit) = ScreenSurface {
     Column(
         verticalArrangement = Arrangement.spacedBy(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -527,9 +700,13 @@ fun SettingsScreen(navController: NavHostController) = ScreenSurface {
         )
 
         DsCard {
-            SettingsSwitch("Dark Mode", false)
-            SettingsSwitch("Push Notifications", true)
-            SettingsSwitch("Weekly Reports", true)
+            SettingsSwitch(
+                label = "Dark Mode",
+                checked = darkMode,
+                onCheckedChange = onDarkModeChange
+            )
+            SettingsSwitch("Push Notifications", true, onCheckedChange = {}) // Needs to be finished!
+            SettingsSwitch("Weekly Reports", true, onCheckedChange = {}) // Needs to be finished!
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 12.dp),
                 thickness = 1.dp,
@@ -546,8 +723,8 @@ fun SettingsScreen(navController: NavHostController) = ScreenSurface {
 }
 
 @Composable
-private fun SettingsSwitch(label: String, enabled: Boolean) {
-    var checked by remember { mutableStateOf(enabled) }
+private fun SettingsSwitch(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    //var checked by remember { mutableStateOf(enabled) }
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -556,7 +733,7 @@ private fun SettingsSwitch(label: String, enabled: Boolean) {
         Text(label, fontFamily = Inter, color = TranquilText)
         Switch(
             checked = checked,
-            onCheckedChange = { checked = it },
+            onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = TranquilBlue,
                 checkedTrackColor = TranquilBlue.copy(alpha = .5f)
