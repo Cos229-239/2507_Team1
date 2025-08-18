@@ -92,7 +92,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.layout.*
-
+import androidx.compose.material3.HorizontalDivider
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.mainui.ui.MoodViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.mainui.data.entities.MoodEntry
+import androidx.compose.ui.graphics.drawscope.Stroke
 
 // Reusable theme helpers
 private val TranquilBlue = Color(0xFF1693B2)          // link / accent
@@ -167,6 +172,7 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             MyApp()
+            val moodViewModel: MoodViewModel = viewModel()
         }
     }
 }
@@ -243,11 +249,11 @@ private fun QuoteCard(
             Spacer(Modifier.height(10.dp))
 
             // Thin accent divider
-            Divider(
+            HorizontalDivider(
                 modifier = Modifier
                     .width(48.dp)
                     .height(2.dp),
-                color = TranquilBlue.copy(alpha = 0.45f)
+                thickness = DividerDefaults.Thickness, color = TranquilBlue.copy(alpha = 0.45f)
             )
 
             Spacer(Modifier.height(8.dp))
@@ -485,38 +491,35 @@ fun EmotionBox(
     }
 }
 
+// Daily Check-In
 @Composable
-fun DailyCheckInScreen(navController: NavController) {
+fun DailyCheckInScreen(
+    navController: NavController,
+    moodVm: com.example.mainui.ui.MoodViewModel
+) {
     var selectedEmotion by remember { mutableStateOf(emotions.first()) }
     var notes by rememberSaveable { mutableStateOf("") }
 
+    fun emotionScore(name: String) = when (name) {
+        "Angry" -> 1
+        "Sad" -> 2
+        "Neutral" -> 3
+        "Content" -> 4
+        "Happy" -> 5
+        else -> 3
+    }
+
     ScreenSurface {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
+            modifier = Modifier.fillMaxSize().padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                "Daily Check In",
-                fontFamily = InterBold,
-                fontSize = 30.sp,
-                color = Color.White
-            )
+            Text("Daily Check In", fontFamily = InterBold, fontSize = 30.sp, color = Color.White)
+            Text("How are you feeling today?", fontFamily = Inter, fontSize = 18.sp, color = Color.White)
 
-            Text(
-                "How are you feeling today?",
-                fontFamily = Inter,
-                fontSize = 18.sp,
-                color = Color.White
-            )
-
-            // One row, five buttons
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 val boxSize = 64.dp
@@ -534,14 +537,21 @@ fun DailyCheckInScreen(navController: NavController) {
                 value = notes,
                 onValueChange = { notes = it },
                 label = { Text("Elaborate on how you are feeling...") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 120.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp),
                 minLines = 4
             )
 
             Button(
-                onClick = { navController.popBackStack() },
+                onClick = {
+                    moodVm.addEntry(
+                        emotion = selectedEmotion.name,
+                        score = emotionScore(selectedEmotion.name),
+                        notes = notes
+                    )
+                    navController.navigate("history") { // go see what we saved
+                        popUpTo("home") { inclusive = false }
+                    }
+                },
                 colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue),
                 modifier = Modifier.padding(top = 8.dp)
             ) {
@@ -598,24 +608,108 @@ fun JournalScreen(navController: NavHostController) = ScreenSurface {
 
 // Mood History
 @Composable
-fun MoodHistoryScreen(navController: NavHostController) = ScreenSurface {
+fun MoodHistoryScreen(
+    navController: NavHostController,
+    moodVm: com.example.mainui.ui.MoodViewModel
+) = ScreenSurface {
+
+    val entries by moodVm.entries.collectAsStateWithLifecycle()
+
     Column(
+        modifier = Modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Mood History Screen", fontFamily = InterBold, fontSize = 28.sp, color = Color.White)
-        Spacer(Modifier.height(24.dp))
-        Button(
-            onClick = { navController.popBackStack() },
-            colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue),
-            modifier = Modifier.padding(top = 24.dp)
-        ) {
-            Text("Go back", fontFamily = Inter, color = Color.White)
+        Text("Mood History", fontFamily = InterBold, fontSize = 30.sp, color = Color.White)
+
+        DsCard {
+            Text("Trend (last 14)", fontFamily = InterBold, color = TranquilText)
+            Spacer(Modifier.height(8.dp))
+            MoodTrendChart(
+                scores = entries.take(14).map { it.score }.reversed(),
+                modifier = Modifier.fillMaxWidth().height(140.dp)
+            )
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        DsCard {
+            Text("Entries", fontFamily = InterBold, color = TranquilText)
+            Spacer(Modifier.height(8.dp))
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth().heightIn(min = 0.dp, max = 420.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(entries) { e -> MoodRow(e) }
+            }
+        }
 
-        QuoteBlock()
+        Button(
+            onClick = { navController.popBackStack() },
+            colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue)
+        ) { Text("Go back", fontFamily = Inter, color = Color.White) }
+    }
+}
+
+@Composable
+private fun MoodRow(entry: MoodEntry) {
+    val date = java.text.SimpleDateFormat("MMM d, yyyy h:mm a")
+        .format(java.util.Date(entry.timestamp))
+    Column(Modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("$date • ${entry.emotion}", fontFamily = InterBold, color = TranquilText)
+        }
+        if (entry.notes.isNotBlank()) {
+            Text(entry.notes, fontFamily = Inter, color = TranquilText, fontSize = 14.sp)
+        }
+        HorizontalDivider(
+            Modifier.padding(top = 8.dp),
+            DividerDefaults.Thickness,
+            DividerDefaults.color
+        )
+    }
+}
+
+@Composable
+private fun MoodTrendChart(scores: List<Int>, modifier: Modifier = Modifier) {
+    if (scores.isEmpty()) {
+        Text("No data yet", fontFamily = Inter, color = TranquilText)
+        return
+    }
+    androidx.compose.foundation.Canvas(modifier = modifier) {
+        val padding = 16.dp.toPx()
+        val w = size.width - padding * 2
+        val h = size.height - padding * 2
+
+        val minY = 1f
+        val maxY = 5f
+        val stepX = if (scores.size == 1) 0f else w / (scores.size - 1).coerceAtLeast(1)
+        val pts = scores.mapIndexed { idx, s ->
+            val x = padding + stepX * idx
+            val t = ((s - minY) / (maxY - minY)).coerceIn(0f, 1f)
+            val y = padding + (1f - t) * h
+            androidx.compose.ui.geometry.Offset(x, y)
+        }
+
+        // axis
+        drawLine(
+            color = TranquilBlue.copy(alpha = 0.6f),
+            start = androidx.compose.ui.geometry.Offset(padding, padding + h),
+            end = androidx.compose.ui.geometry.Offset(padding + w, padding + h),
+            strokeWidth = 2f
+        )
+        // line
+        for (i in 0 until pts.lastIndex) {
+            drawLine(
+                color = TranquilBlue,
+                start = pts[i],
+                end = pts[i + 1],
+                strokeWidth = 6f
+            )
+        }
+        // dots
+        pts.forEach { p ->
+            drawCircle(color = Color(0xFF0C6C7A), radius = 8f, center = p, style = Stroke(width = 8f))
+            drawCircle(color = Color.White, radius = 4f, center = p)
+        }
     }
 }
 
@@ -646,15 +740,17 @@ fun AdviceScreen(navController: NavHostController) = ScreenSurface {
 fun AppNavigation(
     navController: NavHostController,
     darkMode: Boolean,
-    onDarkModeChange: (Boolean) -> Unit
+    onDarkModeChange: (Boolean) -> Unit,
+    moodVm: com.example.mainui.ui.MoodViewModel
+
 ) {
     NavHost(navController = navController, startDestination = "home") {
         composable("home")     { HomeScreen(navController) }
         composable("profile")  { ProfileScreen(navController) }
         composable("settings") { SettingsScreen(navController, darkMode, onDarkModeChange) }
-        composable("checkin")  { DailyCheckInScreen(navController) }
+        composable("checkin")  { DailyCheckInScreen(navController, moodVm) }
         composable("journal")  { JournalScreen(navController) }
-        composable("history")  { MoodHistoryScreen(navController) }
+        composable("history")  { MoodHistoryScreen(navController, moodVm) }
         composable("advice")   { AdviceScreen(navController) }
     }
 }
@@ -665,6 +761,7 @@ fun AppNavigation(
 fun MyApp() {
     val appContext = LocalContext.current.applicationContext
     val navController = rememberNavController()
+    val moodVm: MoodViewModel = viewModel()
 
     val darkModeFlow = remember(appContext) {
         ThemeSettings.darkModeFlow(appContext).distinctUntilChanged()
@@ -748,7 +845,8 @@ fun MyApp() {
                 AppNavigation(
                     navController = navController,
                     darkMode = darkMode,
-                    onDarkModeChange = setDarkMode
+                    onDarkModeChange = setDarkMode,
+                    moodVm = moodVm
                 )
             }
         }
