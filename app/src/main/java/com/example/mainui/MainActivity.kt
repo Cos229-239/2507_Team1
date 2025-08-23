@@ -136,21 +136,34 @@ private val quotes = listOf(
 
 private fun randomQuote(): String = quotes.random()
 
+private fun backgroundBrush(darkMode: Boolean): Brush {
+    return if (darkMode) {
+        Brush.verticalGradient(
+            listOf(Color.Black, Color(0xFF121212))
+        )
+    } else {
+        Brush.verticalGradient(
+            listOf(Color(0xFF46127A), Color(0xFF166D70))
+        )
+    }
+}
+
+
 @Composable
-private fun ScreenSurface(content: @Composable () -> Unit) {
+private fun ScreenSurface(
+    darkMode: Boolean,
+    content: @Composable () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(Color(0xFF46127A), Color(0xFF166D70))
-                )
-            )
+            .background(backgroundBrush(darkMode))
             .systemBarsPadding()
             .padding(horizontal = 24.dp, vertical = 32.dp),
         contentAlignment = Alignment.TopCenter
     ) { content() }
 }
+
 
 @Composable
 private fun DsCard(
@@ -361,7 +374,10 @@ private fun ProfileRow(label: String, value: String) {
 
 // Profile Screen
 @Composable
-fun ProfileScreen(navController: NavHostController) = ScreenSurface {
+fun ProfileScreen(
+    navController: NavHostController,
+    darkMode: Boolean
+) = ScreenSurface(darkMode) {
     Column(
         verticalArrangement = Arrangement.spacedBy(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -388,6 +404,7 @@ fun ProfileScreen(navController: NavHostController) = ScreenSurface {
     }
 }
 
+
 @Composable
 private fun SettingsSwitch(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     //var checked by remember { mutableStateOf(enabled) }
@@ -410,7 +427,7 @@ private fun SettingsSwitch(label: String, checked: Boolean, onCheckedChange: (Bo
 
 // Settings Screen
 @Composable
-fun SettingsScreen(navController: NavHostController, darkMode: Boolean, onDarkModeChange: (Boolean) -> Unit) = ScreenSurface {
+fun SettingsScreen(navController: NavHostController, darkMode: Boolean, onDarkModeChange: (Boolean) -> Unit) = ScreenSurface(darkMode) {
     Column(
         verticalArrangement = Arrangement.spacedBy(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -495,7 +512,8 @@ fun EmotionBox(
 @Composable
 fun DailyCheckInScreen(
     navController: NavController,
-    moodVm: com.example.mainui.ui.MoodViewModel
+    moodVm: com.example.mainui.ui.MoodViewModel,
+    darkMode: Boolean
 ) {
     var selectedEmotion by remember { mutableStateOf(emotions.first()) }
     var notes by rememberSaveable { mutableStateOf("") }
@@ -509,7 +527,7 @@ fun DailyCheckInScreen(
         else -> 3
     }
 
-    ScreenSurface {
+    ScreenSurface(darkMode) {
         Column(
             modifier = Modifier.fillMaxSize().padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -585,7 +603,7 @@ private fun QuoteBlock(modifier: Modifier = Modifier) {
 
 // Journal
 @Composable
-fun JournalScreen(navController: NavHostController) = ScreenSurface {
+fun JournalScreen(navController: NavHostController, darkMode: Boolean) = ScreenSurface(darkMode) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -610,8 +628,9 @@ fun JournalScreen(navController: NavHostController) = ScreenSurface {
 @Composable
 fun MoodHistoryScreen(
     navController: NavHostController,
-    moodVm: com.example.mainui.ui.MoodViewModel
-) = ScreenSurface {
+    moodVm: com.example.mainui.ui.MoodViewModel,
+    darkMode: Boolean
+) = ScreenSurface(darkMode) {
 
     val entries by moodVm.entries.collectAsStateWithLifecycle()
 
@@ -715,7 +734,7 @@ private fun MoodTrendChart(scores: List<Int>, modifier: Modifier = Modifier) {
 
 // Advice
 @Composable
-fun AdviceScreen(navController: NavHostController) = ScreenSurface {
+fun AdviceScreen(navController: NavHostController, darkMode: Boolean) = ScreenSurface(darkMode) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -746,12 +765,12 @@ fun AppNavigation(
 ) {
     NavHost(navController = navController, startDestination = "home") {
         composable("home")     { HomeScreen(navController) }
-        composable("profile")  { ProfileScreen(navController) }
+        composable("profile")  { ProfileScreen(navController, darkMode) }
         composable("settings") { SettingsScreen(navController, darkMode, onDarkModeChange) }
-        composable("checkin")  { DailyCheckInScreen(navController, moodVm) }
-        composable("journal")  { JournalScreen(navController) }
-        composable("history")  { MoodHistoryScreen(navController, moodVm) }
-        composable("advice")   { AdviceScreen(navController) }
+        composable("checkin")  { DailyCheckInScreen(navController, moodVm, darkMode) }
+        composable("journal")  { JournalScreen(navController, darkMode) }
+        composable("history")  { MoodHistoryScreen(navController, moodVm, darkMode) }
+        composable("advice")   { AdviceScreen(navController, darkMode) }
     }
 }
 
@@ -835,11 +854,7 @@ fun MyApp() {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(Color(0xFF46127A), Color(0xFF166D70))
-                        )
-                    )
+                    .background(backgroundBrush(darkMode))
                     .padding(padding)
             ) {
                 AppNavigation(
