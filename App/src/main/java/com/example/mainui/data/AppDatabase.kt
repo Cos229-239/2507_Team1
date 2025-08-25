@@ -6,15 +6,17 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.mainui.data.entities.MoodEntry
 import com.example.mainui.data.entities.User
+import com.example.mainui.data.entities.JournalEntry
 
 @Database(
-    entities = [User::class, MoodEntry::class],
-    version = 2,
+    entities = [User::class, MoodEntry::class, JournalEntry::class],
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun moodDao(): MoodDao
+    abstract fun journalDao(): JournalDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
@@ -29,8 +31,7 @@ abstract class AppDatabase : RoomDatabase() {
                     // During active development this avoids migration crashes.
                     // Remove or replace with proper migrations before release.
                     .fallbackToDestructiveMigration()
-                    .build()
-                    .also { INSTANCE = it }
+                    .build().also { INSTANCE = it }
             }
     }
 }

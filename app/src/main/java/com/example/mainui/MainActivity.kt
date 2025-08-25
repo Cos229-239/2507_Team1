@@ -603,24 +603,111 @@ private fun QuoteBlock(modifier: Modifier = Modifier) {
 
 // Journal
 @Composable
-fun JournalScreen(navController: NavHostController, darkMode: Boolean) = ScreenSurface(darkMode) {
+fun JournalScreen(
+    navController: NavHostController,
+    darkMode: Boolean,
+    journalVm: com.example.mainui.ui.JournalViewModel
+) = ScreenSurface(darkMode) {
+    var text by rememberSaveable { mutableStateOf("") }
+
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        modifier = Modifier.fillMaxSize().padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Journal Screen", fontFamily = InterBold, fontSize = 28.sp, color = Color.White)
-        Spacer(Modifier.height(24.dp))
-        Button(
-            onClick = { navController.popBackStack() },
-            colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue),
-            modifier = Modifier.padding(top = 24.dp)
-        ) {
-            Text("Go back", fontFamily = Inter, color = Color.White)
+        Text("Journal", fontFamily = InterBold, fontSize = 30.sp, color = Color.White)
+
+        DsCard {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                label = { Text("Write your thoughts...") },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 180.dp),
+                minLines = 8
+            )
+            Spacer(Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button(
+                    onClick = {
+                        journalVm.addEntry(text)
+                        text = ""
+                        navController.navigate("journalEntries")
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue)
+                ) { Text("Save Entry", fontFamily = Inter, color = Color.White) }
+
+                OutlinedButton(onClick = { navController.navigate("journalEntries") }) {
+                    Text("View Entries", fontFamily = Inter)
+                }
+            }
         }
+    }
+}
 
-        Spacer(modifier = Modifier.weight(1f))
+// --- Journal list screen ---
+@Composable
+fun JournalEntriesScreen(
+    navController: NavHostController,
+    darkMode: Boolean,
+    journalVm: com.example.mainui.ui.JournalViewModel
+) = ScreenSurface(darkMode) {
 
-        QuoteBlock()
+    val entries by journalVm.entries.collectAsStateWithLifecycle(emptyList())
+
+    Scaffold(
+        containerColor = Color.Transparent,
+        contentColor = TranquilText,
+        bottomBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Button(
+                    onClick = { navController.popBackStack() },
+                    colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue)
+                ) { Text("Go back", fontFamily = Inter, color = Color.White) }
+            }
+        }
+    ) { inner ->
+        Column(
+            modifier = Modifier
+                .padding(inner)
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text("Journal Entries", fontFamily = InterBold, fontSize = 30.sp, color = Color.White)
+
+            DsCard {
+                if (entries.isEmpty()) {
+                    Text("No entries yet", fontFamily = Inter, color = TranquilText)
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 0.dp, max = 520.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(entries) { e ->
+                            val date = java.text.SimpleDateFormat(
+                                "MMM d, yyyy h:mm a",
+                                java.util.Locale.getDefault()
+                            ).format(java.util.Date(e.timestamp))
+
+                            Column {
+                                Text(date, fontFamily = InterBold, color = TranquilText)
+                                Spacer(Modifier.height(4.dp))
+                                Text(e.text, fontFamily = Inter, color = TranquilText)
+                                HorizontalDivider(Modifier.padding(top = 8.dp))
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -634,37 +721,60 @@ fun MoodHistoryScreen(
 
     val entries by moodVm.entries.collectAsStateWithLifecycle()
 
-    Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text("Mood History", fontFamily = InterBold, fontSize = 30.sp, color = Color.White)
-
-        DsCard {
-            Text("Trend (last 14)", fontFamily = InterBold, color = TranquilText)
-            Spacer(Modifier.height(8.dp))
-            MoodTrendChart(
-                scores = entries.take(14).map { it.score }.reversed(),
-                modifier = Modifier.fillMaxWidth().height(140.dp)
-            )
-        }
-
-        DsCard {
-            Text("Entries", fontFamily = InterBold, color = TranquilText)
-            Spacer(Modifier.height(8.dp))
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth().heightIn(min = 0.dp, max = 420.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+    Scaffold(
+        containerColor = Color.Transparent,
+        bottomBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.Center
             ) {
-                items(entries) { e -> MoodRow(e) }
+                Button(
+                    onClick = { navController.popBackStack() },
+                    colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue)
+                ) {
+                    Text("Go back", fontFamily = Inter, color = Color.White)
+                }
             }
         }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text("Mood History", fontFamily = InterBold, fontSize = 30.sp, color = Color.White)
 
-        Button(
-            onClick = { navController.popBackStack() },
-            colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue)
-        ) { Text("Go back", fontFamily = Inter, color = Color.White) }
+            DsCard {
+                Text("Trend (last 14)", fontFamily = InterBold, color = TranquilText)
+                Spacer(Modifier.height(8.dp))
+                MoodTrendChart(
+                    scores = entries.take(14).map { it.score }.reversed(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(140.dp)
+                )
+            }
+
+            DsCard {
+                Text("Entries", fontFamily = InterBold, color = TranquilText)
+                Spacer(Modifier.height(8.dp))
+
+                // Keep this list scrollable inside the card
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 0.dp, max = 420.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(entries) { e -> MoodRow(e) }
+                }
+            }
+        }
     }
 }
 
@@ -735,23 +845,35 @@ private fun MoodTrendChart(scores: List<Int>, modifier: Modifier = Modifier) {
 // Advice
 @Composable
 fun AdviceScreen(navController: NavHostController, darkMode: Boolean) = ScreenSurface(darkMode) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text("Advice Screen", fontFamily = InterBold, fontSize = 28.sp, color = Color.White)
-        Spacer(Modifier.height(24.dp))
-        Button(
-            onClick = { navController.popBackStack() },
-            colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue),
-            modifier = Modifier.padding(top = 24.dp)
-        ) {
-            Text("Go back", fontFamily = Inter, color = Color.White)
+    Scaffold(
+        containerColor = Color.Transparent,
+        contentColor = TranquilText,
+        bottomBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Button(
+                    onClick = { navController.popBackStack() },
+                    colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue)
+                ) { Text("Go back", fontFamily = Inter, color = Color.White) }
+            }
         }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        QuoteBlock()
+    ) { inner ->
+        Column(
+            modifier = Modifier
+                .padding(inner)
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text("Advice Screen", fontFamily = InterBold, fontSize = 28.sp, color = Color.White)
+            Spacer(Modifier.height(24.dp))
+            Spacer(modifier = Modifier.weight(1f))
+            QuoteBlock()
+        }
     }
 }
 
@@ -760,7 +882,8 @@ fun AppNavigation(
     navController: NavHostController,
     darkMode: Boolean,
     onDarkModeChange: (Boolean) -> Unit,
-    moodVm: com.example.mainui.ui.MoodViewModel
+    moodVm: com.example.mainui.ui.MoodViewModel,
+    journalVm: com.example.mainui.ui.JournalViewModel
 
 ) {
     NavHost(navController = navController, startDestination = "home") {
@@ -768,9 +891,13 @@ fun AppNavigation(
         composable("profile")  { ProfileScreen(navController, darkMode) }
         composable("settings") { SettingsScreen(navController, darkMode, onDarkModeChange) }
         composable("checkin")  { DailyCheckInScreen(navController, moodVm, darkMode) }
-        composable("journal")  { JournalScreen(navController, darkMode) }
+        composable("journal")  { JournalScreen(navController, darkMode, journalVm) }
         composable("history")  { MoodHistoryScreen(navController, moodVm, darkMode) }
         composable("advice")   { AdviceScreen(navController, darkMode) }
+
+        composable("journalEntries") {
+            JournalEntriesScreen(navController, darkMode, journalVm)
+        }
     }
 }
 
@@ -781,6 +908,7 @@ fun MyApp() {
     val appContext = LocalContext.current.applicationContext
     val navController = rememberNavController()
     val moodVm: MoodViewModel = viewModel()
+    val journalVm: com.example.mainui.ui.JournalViewModel = viewModel()
 
     val darkModeFlow = remember(appContext) {
         ThemeSettings.darkModeFlow(appContext).distinctUntilChanged()
@@ -861,7 +989,8 @@ fun MyApp() {
                     navController = navController,
                     darkMode = darkMode,
                     onDarkModeChange = setDarkMode,
-                    moodVm = moodVm
+                    moodVm = moodVm,
+                    journalVm = journalVm
                 )
             }
         }
@@ -879,15 +1008,3 @@ fun MyApp() {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
