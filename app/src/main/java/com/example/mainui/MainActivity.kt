@@ -1,110 +1,67 @@
 package com.example.mainui
 
+// import android.view.WindowInsets
+
 import android.os.Bundle
-//import android.view.WindowInsets
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.*
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Modifier
-import androidx.compose.material3.TopAppBar
-import androidx.compose.foundation.layout.Box
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.ui.graphics.Color
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.compose.foundation.layout.height
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.ui.draw.clip
-
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.core.view.WindowCompat
-import androidx.navigation.NavHostController
-import com.example.mainui.ui.theme.MainUITheme
-
-import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.launch
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.ui.unit.Dp
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.HorizontalDivider
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.mainui.ui.MoodViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.mainui.data.entities.MoodEntry
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.mainui.data.entities.MoodEntry
+import com.example.mainui.ui.MoodViewModel
+import com.example.mainui.ui.theme.MainUITheme
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.layout.systemBarsPadding
 
 // Reusable theme helpers
-private val TranquilBlue = Color(0xFF1693B2)          // link / accent
-private val TranquilSurface = Color(0xFFE7F2F4)       // card background
-private val TranquilText   = Color(0xFF022328)        // high-contrast text
-private val Inter = FontFamily(Font(R.font.inter_regular))
-private val InterBold = FontFamily(Font(R.font.inter_bold))
+val TranquilBlue = Color(0xFF1693B2)          // link / accent
+val TranquilSurface = Color(0xFFE7F2F4)       // card background
+val TranquilText   = Color(0xFF022328)        // high-contrast text
+val Inter = FontFamily(Font(R.font.inter_regular))
+val InterBold = FontFamily(Font(R.font.inter_bold))
 
 data class Emotion(val iconResId: Int, val name: String)
 
@@ -148,9 +105,14 @@ private fun backgroundBrush(darkMode: Boolean): Brush {
     }
 }
 
+// Date helper
+private fun Long.toMonthYear(): String {
+    val fmt = java.text.SimpleDateFormat("MMMM yyyy", java.util.Locale.getDefault())
+    return fmt.format(java.util.Date(this))
+}
 
 @Composable
-private fun ScreenSurface(
+fun ScreenSurface(
     darkMode: Boolean,
     content: @Composable () -> Unit
 ) {
@@ -376,26 +338,32 @@ private fun ProfileRow(label: String, value: String) {
 @Composable
 fun ProfileScreen(
     navController: NavHostController,
-    darkMode: Boolean
+    darkMode: Boolean,
+    authVm: com.example.mainui.ui.AuthViewModel   // <-- NOTE this param
 ) = ScreenSurface(darkMode) {
+
+    // read the current user from AuthViewModel
+    val user by authVm.user.collectAsStateWithLifecycle()
+
+    // fallbacks if user is null (e.g., not logged in yet)
+    val displayName = user?.displayName ?: "—"
+    val email       = user?.email ?: "—"
+    val memberSince = user?.createdAt?.toMonthYear() ?: "—"
+
     Column(
         verticalArrangement = Arrangement.spacedBy(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            "My Profile",
-            fontFamily = InterBold,
-            fontSize = 30.sp,
-            color = Color.White
-        )
+        Text("My Profile", fontFamily = InterBold, fontSize = 30.sp, color = Color.White)
 
         DsCard {
-            ProfileRow("Display Name", "Alex Doe")
-            ProfileRow("Email", "alex@feelscape.app")
-            ProfileRow("Member Since", "July 2025")
+            ProfileRow("Display Name", displayName)
+            ProfileRow("Email", email)
+            ProfileRow("Member Since", memberSince)
+
             Spacer(Modifier.height(16.dp))
             Button(
-                onClick = { /* TODO edit screen */ },
+                onClick = { navController.navigate("editProfile") },
                 colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue)
             ) {
                 Text("Edit Profile", fontFamily = Inter, color = Color.White)
@@ -403,7 +371,6 @@ fun ProfileScreen(
         }
     }
 }
-
 
 @Composable
 private fun SettingsSwitch(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
@@ -883,33 +850,77 @@ fun AppNavigation(
     darkMode: Boolean,
     onDarkModeChange: (Boolean) -> Unit,
     moodVm: com.example.mainui.ui.MoodViewModel,
-    journalVm: com.example.mainui.ui.JournalViewModel
-
+    journalVm: com.example.mainui.ui.JournalViewModel,
+    authVm: com.example.mainui.ui.AuthViewModel,
+    currentUser: Any? // replace with your real user type if you want
 ) {
-    NavHost(navController = navController, startDestination = "home") {
+    val startDest = if (currentUser == null) "login" else "home"
+
+    NavHost(navController = navController, startDestination = startDest) {
+
+        // ---------- Auth ----------
+        composable("login") {
+            com.example.mainui.ui.LoginScreen(
+                darkMode = darkMode,
+                authVm = authVm,
+                onLoginSuccess = {
+                    navController.navigate("home") {
+                        popUpTo("home") { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onGoToRegister = { navController.navigate("register") }
+            )
+        }
+        composable("register") {
+            com.example.mainui.ui.RegisterScreen(
+                darkMode = darkMode,
+                authVm = authVm,
+                onRegisterSuccess = {
+                    navController.navigate("home") {
+                        popUpTo("home") { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+        composable("editProfile") {
+            com.example.mainui.ui.EditProfileScreen(
+                darkMode = darkMode,
+                authVm = authVm,
+                onDone = { navController.popBackStack() }
+            )
+        }
+
+        // ---------- App ----------
         composable("home")     { HomeScreen(navController) }
-        composable("profile")  { ProfileScreen(navController, darkMode) }
+        composable("profile")  { ProfileScreen(navController, darkMode, authVm) }
         composable("settings") { SettingsScreen(navController, darkMode, onDarkModeChange) }
         composable("checkin")  { DailyCheckInScreen(navController, moodVm, darkMode) }
         composable("journal")  { JournalScreen(navController, darkMode, journalVm) }
         composable("history")  { MoodHistoryScreen(navController, moodVm, darkMode) }
         composable("advice")   { AdviceScreen(navController, darkMode) }
-
         composable("journalEntries") {
             JournalEntriesScreen(navController, darkMode, journalVm)
         }
     }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyApp() {
     val appContext = LocalContext.current.applicationContext
     val navController = rememberNavController()
+
+    // ViewModels first
     val moodVm: MoodViewModel = viewModel()
     val journalVm: com.example.mainui.ui.JournalViewModel = viewModel()
+    val authVm: com.example.mainui.ui.AuthViewModel = viewModel()
 
+    // Observe auth state (this must come before any logic that uses it)
+    val currentUser by authVm.user.collectAsStateWithLifecycle(initialValue = null)
+
+    // Dark mode
     val darkModeFlow = remember(appContext) {
         ThemeSettings.darkModeFlow(appContext).distinctUntilChanged()
     }
@@ -948,9 +959,7 @@ fun MyApp() {
                                 Text(
                                     buildAnnotatedString {
                                         withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                            append(
-                                                "Feel"
-                                            )
+                                            append("Feel")
                                         }
                                         append("Scape")
                                     },
@@ -990,21 +999,11 @@ fun MyApp() {
                     darkMode = darkMode,
                     onDarkModeChange = setDarkMode,
                     moodVm = moodVm,
-                    journalVm = journalVm
+                    journalVm = journalVm,
+                    authVm = authVm,
+                    currentUser = currentUser
                 )
             }
-        }
-    }
-
-
-    @Composable
-    fun ProfileRow(label: String, value: String) {
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(label, fontFamily = Inter, color = TranquilText)
-            Text(value, fontFamily = InterBold, color = TranquilText)
         }
     }
 }

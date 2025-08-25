@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "360647538080",
+    "project_id": "feelscape-ecf8f",
+    "storage_bucket": "feelscape-ecf8f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:360647538080:android:bd01a89a69428c2edde0c5",
+        "android_client_info": {
+          "package_name": "com.example.mainui"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJkzdqI3xt55KF1lCBE66-kM8rWG2KHMg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
