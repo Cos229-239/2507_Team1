@@ -94,6 +94,20 @@ private val quotes = listOf(
     "Not until we are lost do we begin to understand ourselves - Henry David"
 )
 
+val copingStrategies = listOf(
+    "Take deep, mindful breaths",
+    "Go for a short walk or do light exercise",
+    "Write down your thoughts in a journal",
+    "Listen to calming music or nature sounds",
+    "Talk to a trusted friend or family member",
+    "Drink a glass of water",
+    "Practice a grounding exercise (like 5-4-3-2-1 technique)",
+    "Do a quick body scan meditation",
+    "Give yourself permission to rest",
+    "Limit social media use for a while",
+    "Do something creative (draw, write, play music)",
+    "Remind yourself: this feeling is temporary"
+)
 
 
 private fun randomQuote(): String = quotes.random()
@@ -859,20 +873,44 @@ fun AdviceScreen(navController: NavHostController, darkMode: Boolean) = ScreenSu
             }
         }
     ) { inner ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .padding(inner)
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .fillMaxSize()
+                .padding(horizontal = 24.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Advice Screen", fontFamily = InterBold, fontSize = 28.sp, color = Color.White)
-            Spacer(Modifier.height(24.dp))
-            Spacer(modifier = Modifier.weight(1f))
-            QuoteBlock()
+            item {
+                Text("Advice & Coping", fontFamily = InterBold, fontSize = 28.sp, color = Color.White)
+            }
+
+            item {
+                QuoteBlock()
+            }
+
+            item {
+                DsCard {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            "Coping Strategies",
+                            fontFamily = InterBold,
+                            fontSize = 20.sp,
+                            color = TranquilText
+                        )
+
+                        copingStrategies.forEach {
+                            Text("• $it", fontFamily = Inter, fontSize = 16.sp, color = TranquilText)
+                        }
+                    }
+                }
+            }
         }
     }
 }
+
 
 @Composable
 fun AppNavigation(
