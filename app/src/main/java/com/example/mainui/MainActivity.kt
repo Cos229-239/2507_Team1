@@ -55,6 +55,11 @@ import com.example.mainui.ui.theme.MainUITheme
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.systemBarsPadding
+import com.example.mainui.ui.auth.AuthViewModel
+import com.example.mainui.ui.auth.EditProfileScreen
+import com.example.mainui.ui.auth.LoginScreen
+import com.example.mainui.ui.auth.RegisterScreen
+import com.example.mainui.ui.auth.EditProfileScreen
 
 // Reusable theme helpers
 val TranquilBlue = Color(0xFF1693B2)          // link / accent
@@ -339,7 +344,7 @@ private fun ProfileRow(label: String, value: String) {
 fun ProfileScreen(
     navController: NavHostController,
     darkMode: Boolean,
-    authVm: com.example.mainui.ui.AuthViewModel   // <-- NOTE this param
+    authVm: AuthViewModel   // <-- NOTE this param
 ) = ScreenSurface(darkMode) {
 
     // read the current user from AuthViewModel
@@ -363,7 +368,11 @@ fun ProfileScreen(
 
             Spacer(Modifier.height(16.dp))
             Button(
-                onClick = { navController.navigate("editProfile") },
+                onClick = {
+                    // Ensure previous save flags don't auto-pop the screen
+                    authVm.resetSaveState()
+                    navController.navigate("editProfile")
+                },
                 colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue)
             ) {
                 Text("Edit Profile", fontFamily = Inter, color = Color.White)
@@ -394,7 +403,12 @@ private fun SettingsSwitch(label: String, checked: Boolean, onCheckedChange: (Bo
 
 // Settings Screen
 @Composable
-fun SettingsScreen(navController: NavHostController, darkMode: Boolean, onDarkModeChange: (Boolean) -> Unit) = ScreenSurface(darkMode) {
+fun SettingsScreen(
+    navController: NavHostController,
+    darkMode: Boolean,
+    onDarkModeChange: (Boolean) -> Unit,
+    authVm: AuthViewModel
+) = ScreenSurface(darkMode) {
     Column(
         verticalArrangement = Arrangement.spacedBy(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -425,6 +439,22 @@ fun SettingsScreen(navController: NavHostController, darkMode: Boolean, onDarkMo
                 fontSize = 14.sp,
                 color = TranquilText
             )
+
+            Spacer(Modifier.height(12.dp))
+
+            Button(
+                onClick = {
+                    authVm.signOut()
+                    // Send them to login and clear app stack so back won't return to Home
+                    navController.navigate("login") {
+                        popUpTo("home") { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue)
+            ) {
+                Text("Sign out", fontFamily = Inter, color = Color.White)
+            }
         }
     }
 }
@@ -851,8 +881,8 @@ fun AppNavigation(
     onDarkModeChange: (Boolean) -> Unit,
     moodVm: com.example.mainui.ui.MoodViewModel,
     journalVm: com.example.mainui.ui.JournalViewModel,
-    authVm: com.example.mainui.ui.AuthViewModel,
-    currentUser: Any? // replace with your real user type if you want
+    authVm: AuthViewModel,
+    currentUser: Any?
 ) {
     val startDest = if (currentUser == null) "login" else "home"
 
@@ -860,7 +890,7 @@ fun AppNavigation(
 
         // ---------- Auth ----------
         composable("login") {
-            com.example.mainui.ui.LoginScreen(
+            LoginScreen(
                 darkMode = darkMode,
                 authVm = authVm,
                 onLoginSuccess = {
@@ -873,7 +903,7 @@ fun AppNavigation(
             )
         }
         composable("register") {
-            com.example.mainui.ui.RegisterScreen(
+            RegisterScreen(
                 darkMode = darkMode,
                 authVm = authVm,
                 onRegisterSuccess = {
@@ -885,7 +915,7 @@ fun AppNavigation(
             )
         }
         composable("editProfile") {
-            com.example.mainui.ui.EditProfileScreen(
+            EditProfileScreen(
                 darkMode = darkMode,
                 authVm = authVm,
                 onDone = { navController.popBackStack() }
@@ -895,7 +925,7 @@ fun AppNavigation(
         // ---------- App ----------
         composable("home")     { HomeScreen(navController) }
         composable("profile")  { ProfileScreen(navController, darkMode, authVm) }
-        composable("settings") { SettingsScreen(navController, darkMode, onDarkModeChange) }
+        composable("settings") { SettingsScreen(navController, darkMode, onDarkModeChange, authVm = authVm) }
         composable("checkin")  { DailyCheckInScreen(navController, moodVm, darkMode) }
         composable("journal")  { JournalScreen(navController, darkMode, journalVm) }
         composable("history")  { MoodHistoryScreen(navController, moodVm, darkMode) }
@@ -915,10 +945,11 @@ fun MyApp() {
     // ViewModels first
     val moodVm: MoodViewModel = viewModel()
     val journalVm: com.example.mainui.ui.JournalViewModel = viewModel()
-    val authVm: com.example.mainui.ui.AuthViewModel = viewModel()
+    val authVm: AuthViewModel = viewModel()
 
-    // Observe auth state (this must come before any logic that uses it)
+    // Observe auth state (must come before any logic that uses it)
     val currentUser by authVm.user.collectAsStateWithLifecycle(initialValue = null)
+    val authReady by authVm.authReady.collectAsStateWithLifecycle(false)
 
     // Dark mode
     val darkModeFlow = remember(appContext) {
@@ -932,77 +963,90 @@ fun MyApp() {
     }
 
     MainUITheme(darkTheme = darkMode) {
-        Scaffold(
-            contentWindowInsets = WindowInsets.systemBars,
-            topBar = {
-                TopAppBar(
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF3E8FF)),
-                    modifier = Modifier.shadow(4.dp),
-                    title = {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                IconButton(onClick = {
-                                    navController.navigate("home") {
-                                        popUpTo("home") { inclusive = true }
-                                    }
-                                }) {
-                                    Image(
-                                        painter = painterResource(R.drawable.feelscape_logo),
-                                        contentDescription = "FeelScape Logo",
-                                        modifier = Modifier.size(40.dp).padding(end = 6.dp)
-                                    )
-                                }
-                                Text(
-                                    buildAnnotatedString {
-                                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                            append("Feel")
-                                        }
-                                        append("Scape")
-                                    },
-                                    fontSize = 28.sp,
-                                    color = Color(0xFF166D70)
-                                )
-                            }
-                            Row {
-                                IconButton(onClick = { navController.navigate("profile") }) {
-                                    Image(
-                                        painter = painterResource(R.drawable.userprofile_icon),
-                                        contentDescription = "Profile",
-                                        modifier = Modifier.size(32.dp)
-                                    )
-                                }
-                                IconButton(onClick = { navController.navigate("settings") }) {
-                                    Image(
-                                        painter = painterResource(R.drawable.settings_icon),
-                                        contentDescription = "Settings",
-                                        modifier = Modifier.size(32.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                )
-            }
-        ) { padding ->
+        if (!authReady) {
+            // SIMPLE GATE: show gradient with a small loading label
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(backgroundBrush(darkMode))
-                    .padding(padding)
+                    .systemBarsPadding(),
+                contentAlignment = Alignment.Center
             ) {
-                AppNavigation(
-                    navController = navController,
-                    darkMode = darkMode,
-                    onDarkModeChange = setDarkMode,
-                    moodVm = moodVm,
-                    journalVm = journalVm,
-                    authVm = authVm,
-                    currentUser = currentUser
-                )
+                Text("Loading…", color = Color.White, fontFamily = Inter)
+            }
+        } else {
+            Scaffold(
+                contentWindowInsets = WindowInsets.systemBars,
+                topBar = {
+                    TopAppBar(
+                        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF3E8FF)),
+                        modifier = Modifier.shadow(4.dp),
+                        title = {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    IconButton(onClick = {
+                                        navController.navigate("home") {
+                                            popUpTo("home") { inclusive = true }
+                                        }
+                                    }) {
+                                        Image(
+                                            painter = painterResource(R.drawable.feelscape_logo),
+                                            contentDescription = "FeelScape Logo",
+                                            modifier = Modifier.size(40.dp).padding(end = 6.dp)
+                                        )
+                                    }
+                                    Text(
+                                        buildAnnotatedString {
+                                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                                append("Feel")
+                                            }
+                                            append("Scape")
+                                        },
+                                        fontSize = 28.sp,
+                                        color = Color(0xFF166D70)
+                                    )
+                                }
+                                Row {
+                                    IconButton(onClick = { navController.navigate("profile") }) {
+                                        Image(
+                                            painter = painterResource(R.drawable.userprofile_icon),
+                                            contentDescription = "Profile",
+                                            modifier = Modifier.size(32.dp)
+                                        )
+                                    }
+                                    IconButton(onClick = { navController.navigate("settings") }) {
+                                        Image(
+                                            painter = painterResource(R.drawable.settings_icon),
+                                            contentDescription = "Settings",
+                                            modifier = Modifier.size(32.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    )
+                }
+            ) { padding ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(backgroundBrush(darkMode))
+                        .padding(padding)
+                ) {
+                    AppNavigation(
+                        navController = navController,
+                        darkMode = darkMode,
+                        onDarkModeChange = setDarkMode,
+                        moodVm = moodVm,
+                        journalVm = journalVm,
+                        authVm = authVm,
+                        currentUser = currentUser
+                    )
+                }
             }
         }
     }

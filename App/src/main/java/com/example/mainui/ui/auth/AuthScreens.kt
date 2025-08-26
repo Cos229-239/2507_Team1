@@ -1,4 +1,4 @@
-package com.example.mainui.ui
+package com.example.mainui.ui.auth
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -11,7 +11,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.mainui.TranquilBlue
-import com.example.mainui.TranquilText
 import com.example.mainui.Inter
 import com.example.mainui.InterBold
 import com.example.mainui.ScreenSurface
@@ -136,62 +135,4 @@ fun RegisterScreen(
             }
         }
     }
-}
-
-@Composable
-fun EditProfileScreen(
-    darkMode: Boolean,
-    authVm: AuthViewModel,
-    onDone: () -> Unit
-) = ScreenSurface(darkMode) {
-    val user by authVm.user.collectAsStateWithLifecycle()
-    val ui by authVm.ui.collectAsStateWithLifecycle()
-
-    var name by remember(user) { mutableStateOf(user?.displayName.orEmpty()) }
-
-    val canSave = name.trim().isNotEmpty() &&
-            name.trim() != (user?.displayName ?: "") &&
-            !ui.loading
-
-    Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text("Edit Profile", fontFamily = InterBold, color = Color.White,
-            fontSize = MaterialTheme.typography.headlineSmall.fontSize)
-
-        Card(colors = CardDefaults.cardColors(containerColor = TranquilSurface),
-            modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Display name") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-
-                if (ui.error != null) {
-                    Text(ui.error!!, color = MaterialTheme.colorScheme.error, fontFamily = Inter)
-                }
-
-                Button(
-                    onClick = { authVm.updateDisplayName(name) { onDone() } },
-                    enabled = canSave,
-                    colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue)
-                ) {
-                    Text(if (ui.loading) "Saving…" else "Save",
-                        fontFamily = Inter, color = Color.White)
-                }
-            }
-        }
-    }
-}
-
-private fun AuthViewModel.updateDisplayName(
-    name: String,
-    function: () -> Unit
-) {
 }
