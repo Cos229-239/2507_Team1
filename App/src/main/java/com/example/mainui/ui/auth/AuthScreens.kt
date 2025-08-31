@@ -3,136 +3,288 @@ package com.example.mainui.ui.auth
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.mainui.TranquilBlue
-import com.example.mainui.Inter
-import com.example.mainui.InterBold
+import androidx.navigation.NavHostController
+
+// Input & IME
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+
+// Icons
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+
+// Shared tokens/components
+import com.example.mainui.FrostedCard
+import com.example.mainui.NeonButton
 import com.example.mainui.ScreenSurface
-import com.example.mainui.TranquilSurface
+import com.example.mainui.ScreenWithHeader
+import com.example.mainui.ui.theme.Inter
+import com.example.mainui.ui.theme.InterBold
+import com.example.mainui.ui.theme.PanelStroke
+import com.example.mainui.ui.theme.PanelSurface
+import com.example.mainui.ui.theme.TranquilBlue
+import com.example.mainui.ui.theme.TranquilText
 
 @Composable
 fun LoginScreen(
+    navController: NavHostController,
     darkMode: Boolean,
-    authVm: AuthViewModel,
-    onLoginSuccess: () -> Unit,
-    onGoToRegister: () -> Unit
-) = ScreenSurface(darkMode) {
-
-    var email by rememberSaveable { mutableStateOf("") }
-    var pwd by rememberSaveable { mutableStateOf("") }
+    authVm: AuthViewModel
+) = ScreenWithHeader(
+    navController = navController,
+    darkMode = darkMode,
+    screenLabel = "Sign In"
+) {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var pwVisible by remember { mutableStateOf(false) }
     val ui by authVm.ui.collectAsStateWithLifecycle()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            "Welcome back",
-            fontFamily = InterBold,
-            color = Color.White,
-            fontSize = MaterialTheme.typography.headlineSmall.fontSize
-        )
-
-        Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFE7F2F4)),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = { Text("Email") },
-                    modifier = Modifier.fillMaxWidth()
+    FrostedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Email", fontFamily = Inter) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next
+                ),
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = TranquilBlue,
+                    unfocusedBorderColor = PanelStroke,
+                    focusedTextColor = TranquilText,
+                    unfocusedTextColor = TranquilText,
+                    focusedLabelColor = TranquilBlue,
+                    unfocusedLabelColor = TranquilText.copy(alpha = 0.8f),
+                    cursorColor = TranquilBlue
                 )
-                OutlinedTextField(
-                    value = pwd,
-                    onValueChange = { pwd = it },
-                    label = { Text("Password") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Password", fontFamily = Inter) },
+                singleLine = true,
+                visualTransformation = if (pwVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                trailingIcon = {
+                    val icon = if (pwVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
+                    IconButton(onClick = { pwVisible = !pwVisible }) {
+                        Icon(icon, contentDescription = if (pwVisible) "Hide password" else "Show password")
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = TranquilBlue,
+                    unfocusedBorderColor = PanelStroke,
+                    focusedTextColor = TranquilText,
+                    unfocusedTextColor = TranquilText,
+                    focusedLabelColor = TranquilBlue,
+                    unfocusedLabelColor = TranquilText.copy(alpha = 0.8f),
+                    cursorColor = TranquilBlue
                 )
-                ui.error?.let { Text(it, color = MaterialTheme.colorScheme.error, fontFamily = Inter) }
+            )
 
-                Button(
-                    onClick = { authVm.signIn(email, pwd, onLoginSuccess) },
-                    enabled = !ui.loading,
-                    colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue)
-                ) { Text("Log in", fontFamily = Inter, color = Color.White) }
-
-                TextButton(onClick = onGoToRegister) { Text("Create an account", fontFamily = Inter) }
+            if (ui.error != null) {
+                Text(
+                    text = ui.error ?: "",
+                    color = MaterialTheme.colorScheme.error,
+                    fontFamily = Inter
+                )
             }
+
+            Spacer(Modifier.height(8.dp))
+
+            NeonButton(
+                onClick = {
+                    authVm.signIn(email.trim(), password) {
+                        navController.navigate("home") {
+                            popUpTo("home") { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                },
+                label = if (ui.loading) "Signing in…" else "Log in",
+                modifier = Modifier.fillMaxWidth(0.6f),
+                enabled = !ui.loading
+            )
         }
+    }
+
+    TextButton(onClick = { navController.navigate("register") }) {
+        Text("Create an account", fontFamily = InterBold, color = TranquilBlue)
     }
 }
 
 @Composable
 fun RegisterScreen(
+    navController: NavHostController,
     darkMode: Boolean,
     authVm: AuthViewModel,
-    onRegisterSuccess: () -> Unit,
-) = ScreenSurface(darkMode) {
+    onRegisterSuccess: () -> Unit
+) = ScreenWithHeader(
+    navController = navController,
+    darkMode = darkMode,
+    screenLabel = "Register"
+) {
+    // When a user appears, leave this screen
+    val user by authVm.user.collectAsStateWithLifecycle(initialValue = null)
+    LaunchedEffect(user) { if (user != null) onRegisterSuccess() }
 
-    var name by rememberSaveable { mutableStateOf("") }
-    var email by rememberSaveable { mutableStateOf("") }
-    var pwd by rememberSaveable { mutableStateOf("") }
-    val ui by authVm.ui.collectAsStateWithLifecycle()
+    var name by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirm by remember { mutableStateOf("") }
+    var pwVisible by remember { mutableStateOf(false) }
+    var cpwVisible by remember { mutableStateOf(false) }
+    var isSubmitting by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            "Create account",
-            fontFamily = InterBold,
-            color = Color.White,
-            fontSize = MaterialTheme.typography.headlineSmall.fontSize
-        )
+    val nameOk = name.trim().isNotEmpty()
+    val emailOk = email.isNotBlank()
+    val pwOk = password.length >= 6
+    val match = password == confirm
+    val canSubmit = nameOk && emailOk && pwOk && match && !isSubmitting
 
-        Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFE7F2F4)),
-            modifier = Modifier.fillMaxWidth()
+    FrostedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Display name") },
-                    modifier = Modifier.fillMaxWidth()
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Display name", fontFamily = Inter, fontStyle = FontStyle.Italic, color = TranquilBlue) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = TranquilBlue,
+                    unfocusedBorderColor = PanelStroke,
+                    focusedTextColor = TranquilText,
+                    unfocusedTextColor = TranquilText,
+                    focusedLabelColor = TranquilBlue,
+                    unfocusedLabelColor = TranquilBlue,
+                    cursorColor = TranquilBlue
                 )
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = { Text("Email") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = pwd,
-                    onValueChange = { pwd = it },
-                    label = { Text("Password") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth()
-                )
+            )
 
-                ui.error?.let { Text(it, color = MaterialTheme.colorScheme.error, fontFamily = Inter) }
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Email", fontFamily = Inter, fontStyle = FontStyle.Italic, color = TranquilBlue) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next
+                ),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = TranquilBlue,
+                    unfocusedBorderColor = PanelStroke,
+                    focusedTextColor = TranquilText,
+                    unfocusedTextColor = TranquilText,
+                    focusedLabelColor = TranquilBlue,
+                    unfocusedLabelColor = TranquilBlue,
+                    cursorColor = TranquilBlue
+                )
+            )
 
-                Button(
-                    onClick = { authVm.signUp(name, email, pwd, onRegisterSuccess) },
-                    enabled = name.isNotBlank() && email.isNotBlank() && pwd.length >= 6 && !ui.loading,
-                    colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue)
-                ) { Text("Sign up", fontFamily = Inter, color = Color.White) }
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Password (min 6 chars)", fontFamily = Inter, fontStyle = FontStyle.Italic, color = TranquilBlue) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                visualTransformation = if (pwVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Next
+                ),
+                trailingIcon = {
+                    val icon = if (pwVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
+                    IconButton(onClick = { pwVisible = !pwVisible }) {
+                        Icon(icon, contentDescription = if (pwVisible) "Hide password" else "Show password")
+                    }
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = TranquilBlue,
+                    unfocusedBorderColor = PanelStroke,
+                    focusedTextColor = TranquilText,
+                    unfocusedTextColor = TranquilText,
+                    focusedLabelColor = TranquilBlue,
+                    unfocusedLabelColor = TranquilBlue,
+                    cursorColor = TranquilBlue
+                )
+            )
+
+            OutlinedTextField(
+                value = confirm,
+                onValueChange = { confirm = it },
+                label = { Text("Confirm password", fontFamily = Inter, fontStyle = FontStyle.Italic, color = TranquilBlue) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                visualTransformation = if (cpwVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                trailingIcon = {
+                    val icon = if (cpwVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
+                    IconButton(onClick = { cpwVisible = !cpwVisible }) {
+                        Icon(icon, contentDescription = if (cpwVisible) "Hide password" else "Show password")
+                    }
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = TranquilBlue,
+                    unfocusedBorderColor = PanelStroke,
+                    focusedTextColor = TranquilText,
+                    unfocusedTextColor = TranquilText,
+                    focusedLabelColor = TranquilBlue,
+                    unfocusedLabelColor = TranquilBlue,
+                    cursorColor = TranquilBlue
+                )
+            )
+
+            if (!match && confirm.isNotEmpty()) {
+                Text("Passwords don’t match", color = MaterialTheme.colorScheme.error, fontFamily = Inter)
             }
+
+            Spacer(Modifier.height(6.dp))
+
+            NeonButton(
+                onClick = {
+                    if (!canSubmit) return@NeonButton
+                    isSubmitting = true
+                    authVm.signUp(
+                        displayName = name.trim(),
+                        email = email.trim(),
+                        password = password
+                    ) {
+                        isSubmitting = false
+                        onRegisterSuccess()
+                    }
+                },
+                label = if (isSubmitting) "Creating…" else "Create Account",
+                modifier = Modifier.fillMaxWidth(0.6f),
+                enabled = canSubmit
+            )
         }
     }
 }

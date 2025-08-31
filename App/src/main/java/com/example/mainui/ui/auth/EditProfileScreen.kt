@@ -3,7 +3,6 @@ package com.example.mainui.ui.auth
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -12,8 +11,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,96 +25,115 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
+import com.example.mainui.NeonButton
 
 import com.example.mainui.ScreenSurface
-import com.example.mainui.Inter
-import com.example.mainui.InterBold
-import com.example.mainui.TranquilBlue
-import com.example.mainui.TranquilSurface
-import com.example.mainui.TranquilText
+import com.example.mainui.ui.theme.Inter
+import com.example.mainui.ui.theme.InterBold
+import com.example.mainui.ui.theme.TranquilBlue
+import com.example.mainui.ui.theme.TranquilText
+import com.example.mainui.ui.theme.TranquilSurface
+import com.example.mainui.ui.theme.PanelSurface
+import com.example.mainui.ui.theme.PanelStroke
+import com.example.mainui.ScreenWithHeader
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.mainui.BackBar
+import com.example.mainui.FrostedCard
+import com.example.mainui.NeonButton
+import com.example.mainui.ScreenWithHeader
+import com.example.mainui.ui.theme.*
 
 @Composable
 fun EditProfileScreen(
+    navController: NavHostController,
     darkMode: Boolean,
     authVm: AuthViewModel,
     onDone: () -> Unit
-) = ScreenSurface(darkMode) {
-    // Make sure we can re-enter the screen after a previous save
+) = ScreenWithHeader(
+    navController = navController,
+    darkMode = darkMode,
+    screenLabel = "Edit Profile"
+) {
+    // Ensure we don't auto-pop if returning to this screen
     LaunchedEffect(Unit) { authVm.resetSaveState() }
 
-    // Observe VM state
+    // VM state
     val user by authVm.user.collectAsStateWithLifecycle()
     val isSaving by authVm.isSaving.collectAsStateWithLifecycle()
     val saveError by authVm.saveError.collectAsStateWithLifecycle()
     val saveDone by authVm.saveDone.collectAsStateWithLifecycle()
 
-    // Local field state, seeded from latest user snapshot
+    // Local field state from latest user snapshot
     var name by remember(user) { mutableStateOf(user?.displayName.orEmpty()) }
-
-    // Pop the screen when save completes
-    LaunchedEffect(saveDone) { if (saveDone) onDone() }
-
     val trimmed = name.trim()
     val canSave = trimmed.isNotEmpty() &&
             trimmed != (user?.displayName ?: "") &&
             !isSaving
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            text = "Edit Profile",
-            fontFamily = InterBold,
-            color = Color.White,
-            fontSize = MaterialTheme.typography.headlineSmall.fontSize
-        )
+    // Pop when save completes
+    LaunchedEffect(saveDone) { if (saveDone) onDone() }
 
-        Card(
-            colors = CardDefaults.cardColors(containerColor = TranquilSurface),
-            modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    // -------- panel (no extra Card/Surface!) --------
+    FrostedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Display name", fontFamily = Inter) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    enabled = !isSaving
-                )
 
-                if (saveError != null) {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = {
                     Text(
-                        text = saveError ?: "",
-                        color = MaterialTheme.colorScheme.error,
-                        fontFamily = Inter
-                    )
-                }
-
-                Spacer(Modifier.height(4.dp))
-                HorizontalDivider(thickness = 1.dp, color = TranquilBlue.copy(alpha = 0.35f))
-
-                Button(
-                    onClick = { authVm.onSaveProfile(trimmed) },
-                    enabled = canSave,
-                    colors = ButtonDefaults.buttonColors(containerColor = TranquilBlue),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = if (isSaving) "Saving…" else "Save",
+                        "Display name",
                         fontFamily = Inter,
-                        color = Color.White
+                        fontStyle = FontStyle.Italic,
+                        color = TranquilBlue
                     )
-                }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                enabled = !isSaving,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = TranquilBlue,
+                    unfocusedBorderColor = PanelStroke,
+                    focusedTextColor = TranquilText,
+                    unfocusedTextColor = TranquilText,
+                    focusedLabelColor = TranquilBlue,
+                    unfocusedLabelColor = TranquilBlue,
+                    cursorColor = TranquilBlue
+                )
+            )
+
+            if (saveError != null) {
+                Text(
+                    text = saveError ?: "",
+                    color = MaterialTheme.colorScheme.error,
+                    fontFamily = Inter
+                )
             }
+
+            Spacer(Modifier.height(6.dp))
+
+            NeonButton(
+                onClick = { authVm.onSaveProfile(trimmed) },
+                label = if (isSaving) "Saving…" else "Save",
+                modifier = Modifier.fillMaxWidth(0.6f),
+                enabled = canSave
+            )
         }
     }
+
+    // Optional back button to match other screens
+    BackBar(navController, label = "Back")
 }
